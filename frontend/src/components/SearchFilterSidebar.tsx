@@ -53,7 +53,7 @@ export default function SearchFilterSidebar({
     (maxPrice ? 1 : 0);
 
   return (
-    <aside className="w-full lg:w-68 bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-6">
+    <aside className="w-full bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
         <div className="flex items-center gap-2">

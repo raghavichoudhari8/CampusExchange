@@ -282,9 +282,9 @@ export default function MarketplacePage() {
         </div>
 
         {/* Main Grid & Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Sidebar */}
-          <div className={`${mobileFilterOpen ? 'block' : 'hidden'} lg:block w-full lg:w-68 flex-shrink-0`}>
+          <div className={`${mobileFilterOpen ? 'block' : 'hidden'} lg:block lg:col-span-4 xl:col-span-3 w-full`}>
             <SearchFilterSidebar
               categories={categories}
               campuses={campuses}
@@ -307,7 +307,7 @@ export default function MarketplacePage() {
           </div>
 
           {/* Listings Section */}
-          <div className="flex-1 w-full space-y-4">
+          <div className="lg:col-span-8 xl:col-span-9 w-full space-y-4">
             <div className="hidden lg:flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Showing {sortedListings.length} listing{sortedListings.length === 1 ? '' : 's'}
@@ -331,7 +331,7 @@ export default function MarketplacePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <div key={n} className="bg-white rounded-3xl border border-slate-200 p-4 space-y-3 animate-pulse">
                     <div className="aspect-[4/3] bg-slate-200 rounded-2xl" />
@@ -342,7 +342,7 @@ export default function MarketplacePage() {
                 ))}
               </div>
             ) : sortedListings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {sortedListings.map((item) => (
                   <ItemCard key={item.id} listing={item} />
                 ))}
