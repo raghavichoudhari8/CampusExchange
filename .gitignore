@@ -42,3 +42,5 @@ data.ms/
 .coverage
 htmlcov/
 .pytest_cache/
+*.tsbuildinfo
+

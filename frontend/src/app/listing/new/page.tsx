@@ -9,6 +9,7 @@ import ImageUploader from '@/components/ImageUploader';
 import { api } from '@/lib/api';
 import { Category, Campus } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/components/Toast';
 import {
   PlusCircle,
   Sparkles,
@@ -18,12 +19,37 @@ import {
   MapPin,
   DollarSign,
   AlertCircle,
-  HelpCircle,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  Check,
 } from 'lucide-react';
+
+const PRESET_MEETING_SPOTS = [
+  'Main Campus Library Front Desk',
+  'Student Union / Food Court',
+  'Engineering Center Atrium',
+  'Dorm Lobby / Reception',
+  'Central Quad Benches',
+];
+
+const SUSPICIOUS_WORDS = [
+  'wire',
+  'crypto',
+  'bitcoin',
+  'western union',
+  'gift card',
+  'telegram',
+  'gun',
+  'weapon',
+  'drug',
+  'weed',
+];
 
 export default function NewListingPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { showSuccess, showError, showWarning } = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
@@ -36,7 +62,7 @@ export default function NewListingPage() {
   const [price, setPrice] = useState('20.00');
   const [isFree, setIsFree] = useState(false);
   const [condition, setCondition] = useState('good');
-  const [locationNote, setLocationNote] = useState('Campus Library / Student Union');
+  const [locationNote, setLocationNote] = useState('Main Campus Library Front Desk');
   const [images, setImages] = useState<string[]>([
     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
   ]);
@@ -68,6 +94,11 @@ export default function NewListingPage() {
       .catch(console.error);
   }, [user]);
 
+  // Real-time safety check
+  const combinedText = `${title} ${description}`.toLowerCase();
+  const triggeredKeyword = SUSPICIOUS_WORDS.find((word) => combinedText.includes(word));
+  const isSafeContent = !triggeredKeyword;
+
   // Trigger ML category auto-suggestion
   const handleAutoSuggestCategory = async () => {
     if (!title.trim() && !description.trim()) return;
@@ -80,6 +111,7 @@ export default function NewListingPage() {
         conf: Math.round(pred.confidence * 100),
       });
       setCategoryId(pred.category_id);
+      showSuccess(`AI suggested category: ${pred.category_name}`);
     } catch (e) {
       console.warn('ML prediction error:', e);
     } finally {
@@ -90,7 +122,9 @@ export default function NewListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim() || !contactValue.trim()) {
-      setError('Please fill out all required fields.');
+      const err = 'Please fill out all required fields.';
+      setError(err);
+      showError(err);
       return;
     }
 
@@ -114,12 +148,16 @@ export default function NewListingPage() {
       });
 
       if (created.status === 'flagged') {
-        alert('Your listing has been submitted for moderation review.');
+        showWarning('Your listing has been submitted for moderation review.');
+      } else {
+        showSuccess('Your listing is live on CampusSwap!');
       }
 
       router.push(`/listing/${created.id}`);
     } catch (err: any) {
-      setError(err.message || 'Failed to create listing');
+      const msg = err.message || 'Failed to create listing';
+      setError(msg);
+      showError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -153,16 +191,47 @@ export default function NewListingPage() {
               </div>
             )}
 
+            {/* Real-time Content Safety Shield */}
+            <div
+              className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between ${
+                isSafeContent
+                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800'
+                  : 'bg-amber-50/80 border-amber-200 text-amber-900'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {isSafeContent ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                )}
+                <span>
+                  {isSafeContent
+                    ? 'Campus Safety Check: Listing meets student marketplace guidelines.'
+                    : `Safety Notice: Detected restricted term ("${triggeredKeyword}"). This may trigger automated moderation.`}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/60">
+                {isSafeContent ? 'Verified Safe' : 'Review Required'}
+              </span>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Title & Description */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Listing Title *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Listing Title *
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {title.length}/100
+                    </span>
+                  </div>
                   <input
                     type="text"
                     required
+                    maxLength={100}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     onBlur={handleAutoSuggestCategory}
@@ -176,19 +245,25 @@ export default function NewListingPage() {
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Item Description *
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleAutoSuggestCategory}
-                      disabled={suggestingCategory || !title}
-                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 disabled:opacity-40"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                      {suggestingCategory ? 'Analyzing...' : 'AI Auto-Suggest Category'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        {description.length}/1000
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleAutoSuggestCategory}
+                        disabled={suggestingCategory || !title}
+                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                        {suggestingCategory ? 'Analyzing...' : 'AI Auto-Suggest Category'}
+                      </button>
+                    </div>
                   </div>
                   <textarea
                     required
                     rows={4}
+                    maxLength={1000}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe the condition, usage, semester materials included, or pickup details..."
@@ -203,7 +278,7 @@ export default function NewListingPage() {
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
                     <span>Category *</span>
                     {mlSuggested && (
-                      <span className="text-[10px] text-emerald-600 font-normal">
+                      <span className="text-[10px] text-emerald-600 font-semibold">
                         AI: {mlSuggested.name} ({mlSuggested.conf}%)
                       </span>
                     )}
@@ -242,7 +317,7 @@ export default function NewListingPage() {
               </div>
 
               {/* Price, Free Toggle & Condition */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Price ($)
@@ -285,18 +360,39 @@ export default function NewListingPage() {
                     <option value="fair">Fair (Usable)</option>
                   </select>
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Safe Meeting Spot
+              {/* Safe Meeting Spot with Quick Presets */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Safe Meeting Spot on Campus *
                   </label>
-                  <input
-                    type="text"
-                    value={locationNote}
-                    onChange={(e) => setLocationNote(e.target.value)}
-                    placeholder="e.g. Student Union / Quad"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                  />
+                  <span className="text-[11px] text-slate-400">Click to select preset</span>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={locationNote}
+                  onChange={(e) => setLocationNote(e.target.value)}
+                  placeholder="e.g. Main Library Front Desk"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {PRESET_MEETING_SPOTS.map((spot) => (
+                    <button
+                      key={spot}
+                      type="button"
+                      onClick={() => setLocationNote(spot)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition ${
+                        locationNote === spot
+                          ? 'bg-indigo-600 text-white border-indigo-600 font-semibold'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {spot}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -374,8 +470,9 @@ export default function NewListingPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-md transition disabled:opacity-50"
+                  className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
+                  <PlusCircle className="w-4 h-4" />
                   {submitting ? 'Encrypting & Posting...' : 'Publish Listing'}
                 </button>
               </div>

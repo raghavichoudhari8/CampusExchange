@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/hooks/useAuth';
+import { ToastProvider } from '@/components/Toast';
 import SellerConsentModal from '@/components/SellerConsentModal';
 
 export const metadata: Metadata = {
@@ -15,10 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased font-sans">
+      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased font-sans selection:bg-indigo-500 selection:text-white">
         <AuthProvider>
-          {children}
-          <SellerConsentModal />
+          <ToastProvider>
+            {children}
+            <SellerConsentModal />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
