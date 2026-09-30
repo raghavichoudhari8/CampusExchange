@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campusswap-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - ENCRYPTION_KEY=wG5k93pQZ99b4m2qG9YkL+X1dF5nZ1yF8eK2eL9kM2s=
+      - APP_SECRET_KEY=campus-swap-development-app-secret-jwt-key-2026
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - MEILISEARCH_MASTER_KEY=campusSwapMeiliMasterKey123
+      - SUPABASE_URL=${SUPABASE_URL:-http://localhost:54321}
+      - SUPABASE_KEY=${SUPABASE_KEY:-dummy-key}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+    depends_on:
+      - meilisearch
+    restart: unless-stopped
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.9
+    container_name: campusswap-meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_MASTER_KEY=campusSwapMeiliMasterKey123
+      - MEILI_ENV=development
+    volumes:
+      - meili_data:/meili_data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: campusswap-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/api/v1/ws
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  meili_data:
