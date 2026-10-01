@@ -40,7 +40,7 @@ export default function ItemCard({ listing }: ItemCardProps) {
             </span>
           ) : (
             <span className="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-extrabold bg-slate-900/85 backdrop-blur-md text-white shadow-lg border border-white/10">
-              ${listing.price.toFixed(2)}
+              ₹{Number(listing.price).toLocaleString('en-IN')}
             </span>
           )}
         </div>

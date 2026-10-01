@@ -216,7 +216,7 @@ export default function ListingDetailPage() {
                   </span>
                 ) : (
                   <span className="px-3.5 py-1.5 rounded-full text-base font-extrabold bg-slate-900/90 backdrop-blur-md text-white shadow-lg">
-                    ${listing.price.toFixed(2)}
+                    ₹{Number(listing.price).toLocaleString('en-IN')}
                   </span>
                 )}
               </div>
@@ -317,7 +317,7 @@ export default function ListingDetailPage() {
                     Asking Price
                   </span>
                   <span className="text-3xl font-black text-slate-900">
-                    {listing.is_free ? 'Free' : `$${listing.price.toFixed(2)}`}
+                    {listing.is_free ? 'Free' : `₹${Number(listing.price).toLocaleString('en-IN')}`}
                   </span>
                 </div>
                 <StatusBadge type="status" value={listing.status} />

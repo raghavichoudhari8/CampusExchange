@@ -17,7 +17,7 @@ import {
   ShieldCheck,
   Tag,
   MapPin,
-  DollarSign,
+  IndianRupee,
   AlertCircle,
   CheckCircle2,
   AlertTriangle,
@@ -59,7 +59,7 @@ export default function NewListingPage() {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [campusId, setCampusId] = useState('');
-  const [price, setPrice] = useState('20.00');
+  const [price, setPrice] = useState('500');
   const [isFree, setIsFree] = useState(false);
   const [condition, setCondition] = useState('good');
   const [locationNote, setLocationNote] = useState('Main Campus Library Front Desk');
@@ -320,19 +320,19 @@ export default function NewListingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Price ($)
+                    Price (₹)
                   </label>
                   <div className="relative">
                     <input
                       type="number"
-                      step="0.5"
+                      step="10"
                       min="0"
                       disabled={isFree}
-                      value={isFree ? '0.00' : price}
+                      value={isFree ? '0' : price}
                       onChange={(e) => setPrice(e.target.value)}
                       className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-200 disabled:text-slate-400"
                     />
-                    <DollarSign className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
+                    <IndianRupee className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
                   </div>
                   <label className="mt-2 flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-emerald-700">
                     <input
@@ -341,7 +341,7 @@ export default function NewListingPage() {
                       onChange={(e) => setIsFree(e.target.checked)}
                       className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
                     />
-                    Free Giveaway ($0)
+                    Free Giveaway (₹0)
                   </label>
                 </div>
 

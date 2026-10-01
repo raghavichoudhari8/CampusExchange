@@ -13,7 +13,7 @@ import {
   PlusCircle,
   MapPin,
   Tag,
-  DollarSign,
+  IndianRupee,
   User,
   CheckCircle,
   X,
@@ -228,7 +228,7 @@ export default function WantedPage() {
                         Max Budget
                       </span>
                       <span className="text-base font-extrabold text-slate-900">
-                        {post.budget_max ? `$${post.budget_max.toFixed(2)}` : 'Flexible / Free'}
+                        {post.budget_max ? `₹${Number(post.budget_max).toLocaleString('en-IN')}` : 'Flexible / Free'}
                       </span>
                     </div>
 
@@ -358,15 +358,15 @@ export default function WantedPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Maximum Budget ($) (Optional)
+                    Maximum Budget (₹) (Optional)
                   </label>
                   <input
                     type="number"
-                    step="1"
+                    step="50"
                     min="0"
                     value={budgetMax}
                     onChange={(e) => setBudgetMax(e.target.value)}
-                    placeholder="e.g. 25"
+                    placeholder="e.g. 500"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>

@@ -107,9 +107,9 @@ export default function MarketplacePage() {
     if (action === 'free') {
       setIsFreeOnly(true);
       setMaxPrice('');
-    } else if (action === 'under20') {
+    } else if (action === 'under500') {
       setIsFreeOnly(false);
-      setMaxPrice('20');
+      setMaxPrice('500');
     } else if (action === 'tech') {
       const techCat = categories.find((c) => c.slug.includes('electronics'));
       if (techCat) setSelectedCategory(techCat.id);
@@ -174,19 +174,19 @@ export default function MarketplacePage() {
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            Free Giveaways ($0)
+            Free Giveaways (₹0)
           </button>
 
           <button
-            onClick={() => handleQuickChip('under20')}
+            onClick={() => handleQuickChip('under500')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition flex-shrink-0 ${
-              maxPrice === '20' && !isFreeOnly
+              maxPrice === '500' && !isFreeOnly
                 ? 'bg-indigo-600 text-white shadow-xs'
                 : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
             }`}
           >
             <Flame className="w-3.5 h-3.5 text-amber-500" />
-            Under $20
+            Under ₹500
           </button>
 
           <button
@@ -253,7 +253,7 @@ export default function MarketplacePage() {
 
             {maxPrice && !isFreeOnly && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">
-                Max ${maxPrice}
+                Max ₹{maxPrice}
                 <X className="w-3.5 h-3.5 cursor-pointer hover:text-indigo-900" onClick={() => setMaxPrice('')} />
               </span>
             )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Category, Campus } from '@/types';
-import { Search, Filter, RotateCcw, Building2, Tag, DollarSign, Sparkles, ArrowUpDown, X } from 'lucide-react';
+import { Search, Filter, RotateCcw, Building2, Tag, IndianRupee, Sparkles, ArrowUpDown, X } from 'lucide-react';
 
 interface SearchFilterSidebarProps {
   categories: Category[];
@@ -151,7 +151,7 @@ export default function SearchFilterSidebar({
       {/* Price & Giveaway Filter */}
       <div>
         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1">
-          <DollarSign className="w-3.5 h-3.5 text-indigo-500" />
+          <IndianRupee className="w-3.5 h-3.5 text-indigo-500" />
           Price Range
         </label>
         <div className="space-y-2.5">
@@ -164,7 +164,7 @@ export default function SearchFilterSidebar({
             />
             <span className="flex items-center gap-1 text-emerald-800">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              Free Giveaways Only ($0)
+              Free Giveaways Only (₹0)
             </span>
           </label>
 
@@ -173,22 +173,22 @@ export default function SearchFilterSidebar({
               <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
                 <span>Budget Cap:</span>
                 <span className="text-indigo-600 font-extrabold">
-                  {maxPrice ? `$${maxPrice}` : 'Unlimited'}
+                  {maxPrice ? `₹${maxPrice}` : 'Unlimited'}
                 </span>
               </div>
               <input
                 type="range"
-                min="5"
-                max="250"
-                step="5"
-                value={maxPrice || '250'}
+                min="100"
+                max="5000"
+                step="100"
+                value={maxPrice || '5000'}
                 onChange={(e) => onMaxPriceChange(e.target.value)}
                 className="w-full accent-indigo-600 mt-1"
               />
               <div className="flex justify-between text-[10px] text-slate-400 mt-0.5 font-mono">
-                <span>$5</span>
-                <span>$100</span>
-                <span>$250+</span>
+                <span>₹100</span>
+                <span>₹2,500</span>
+                <span>₹5,000+</span>
               </div>
             </div>
           )}

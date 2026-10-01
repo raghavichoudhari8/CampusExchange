@@ -395,7 +395,7 @@ export default function DashboardPage() {
                               </span>
                             </td>
                             <td className="py-3 font-semibold text-slate-900">
-                              {item.is_free ? 'Free' : `$${item.price.toFixed(2)}`}
+                              {item.is_free ? 'Free' : `₹${Number(item.price).toLocaleString('en-IN')}`}
                             </td>
                             <td className="py-3">
                               <select
