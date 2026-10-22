@@ -75,25 +75,33 @@ SYNTHETIC_DATA = [
     ("Microeconomics and Macroeconomics course reader spiral bound", "academics-books"),
 ]
 
+import joblib
+
 class MLService:
     def __init__(self):
-        self.pipeline: Optional[Pipeline] = None
-        self._train_model()
+        self._pipeline: Optional[Pipeline] = None
 
-    def _train_model(self):
-        """Trains a baseline TF-IDF + MultinomialNB model on synthetic campus listings."""
+    @property
+    def pipeline(self) -> Optional[Pipeline]:
+        """Lazy load or train lightweight classification pipeline on first request."""
+        if self._pipeline is None:
+            self._train_or_load_model()
+        return self._pipeline
+
+    def _train_or_load_model(self):
+        """Trains or loads a lightweight TF-IDF + MultinomialNB model on synthetic campus listings."""
         try:
             texts = [item[0] for item in SYNTHETIC_DATA]
             labels = [item[1] for item in SYNTHETIC_DATA]
 
-            self.pipeline = Pipeline([
+            self._pipeline = Pipeline([
                 ("tfidf", TfidfVectorizer(ngram_range=(1, 2), stop_words="english", lowercase=True)),
                 ("clf", MultinomialNB(alpha=0.1))
             ])
-            self.pipeline.fit(texts, labels)
+            self._pipeline.fit(texts, labels)
         except Exception as e:
             print("Failed to train ML model:", e)
-            self.pipeline = None
+            self._pipeline = None
 
     def check_content(self, title: str, description: str) -> Tuple[bool, float, Optional[str]]:
         """

@@ -15,7 +15,6 @@ from app.security.auth import (
     compute_user_badges,
 )
 from app.security.encryption import decrypt_contact
-from app.services.websocket_manager import ws_manager
 from app.services.email_service import email_service
 
 router = APIRouter(prefix="/api/v1/contacts", tags=["Contact Requests & Privacy Flow"])
@@ -149,11 +148,14 @@ async def request_contact(
 
     seller = next((p for p in db.profiles if p["id"] == listing["seller_id"]), None)
 
-    # Real-time WebSocket push
-    await ws_manager.send_personal_event(
-        user_id=listing["seller_id"],
-        event_type="new_contact_request",
-        payload={
+    # In-app notification for seller (powers Supabase Realtime event stream)
+    db.notifications.append({
+        "id": str(uuid.uuid4()),
+        "user_id": listing["seller_id"],
+        "type": "new_contact_request",
+        "title": f"New Contact Request: {listing['title']}",
+        "body": f"{current_user['display_name']} requested your contact info for '{listing['title']}'.",
+        "data": {
             "request_id": req_id,
             "listing_id": listing["id"],
             "listing_title": listing["title"],
@@ -162,8 +164,10 @@ async def request_contact(
             "buyer_badges": buyer_badges,
             "message": payload.message,
             "created_at": now.isoformat()
-        }
-    )
+        },
+        "is_read": False,
+        "created_at": now.isoformat()
+    })
 
     # Transactional Email Notification via Resend
     if seller:
@@ -258,11 +262,14 @@ async def respond_to_request(
             except Exception:
                 pass
 
-        # Push real-time WebSocket event to buyer
-        await ws_manager.send_personal_event(
-            user_id=req["buyer_id"],
-            event_type="contact_request_approved",
-            payload={
+        # In-app notification for buyer (triggers Supabase Realtime event)
+        db.notifications.append({
+            "id": str(uuid.uuid4()),
+            "user_id": req["buyer_id"],
+            "type": "contact_request_approved",
+            "title": f"Contact Request Approved: {listing_title}",
+            "body": f"{seller['display_name'] if seller else 'Seller'} approved your contact request for '{listing_title}'.",
+            "data": {
                 "request_id": request_id,
                 "listing_id": req["listing_id"],
                 "listing_title": listing_title,
@@ -271,8 +278,10 @@ async def respond_to_request(
                 "contact_value": decrypted_val,
                 "preferred_note": c_note,
                 "responded_at": now.isoformat()
-            }
-        )
+            },
+            "is_read": False,
+            "created_at": now.isoformat()
+        })
 
         # Resend Email to buyer
         if buyer:
@@ -287,11 +296,16 @@ async def respond_to_request(
             )
 
     elif payload.action == "decline":
-        await ws_manager.send_personal_event(
-            user_id=req["buyer_id"],
-            event_type="contact_request_declined",
-            payload={"request_id": request_id, "listing_title": listing_title}
-        )
+        db.notifications.append({
+            "id": str(uuid.uuid4()),
+            "user_id": req["buyer_id"],
+            "type": "contact_request_declined",
+            "title": f"Contact Request Declined: {listing_title}",
+            "body": f"The seller was unable to accept your request for '{listing_title}'.",
+            "data": {"request_id": request_id, "listing_title": listing_title},
+            "is_read": False,
+            "created_at": now.isoformat()
+        })
         if buyer:
             email_service.notify_buyer_request_declined(
                 buyer_email=buyer["email"],
@@ -300,10 +314,15 @@ async def respond_to_request(
             )
 
     elif payload.action == "revoke":
-        await ws_manager.send_personal_event(
-            user_id=req["buyer_id"],
-            event_type="contact_access_revoked",
-            payload={"request_id": request_id, "listing_title": listing_title}
-        )
+        db.notifications.append({
+            "id": str(uuid.uuid4()),
+            "user_id": req["buyer_id"],
+            "type": "contact_access_revoked",
+            "title": f"Contact Access Revoked: {listing_title}",
+            "body": f"Contact access for '{listing_title}' was revoked.",
+            "data": {"request_id": request_id, "listing_title": listing_title},
+            "is_read": False,
+            "created_at": now.isoformat()
+        })
 
     return _format_contact_request(req, current_user["id"])

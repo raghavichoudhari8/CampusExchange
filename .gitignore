@@ -43,4 +43,7 @@ data.ms/
 htmlcov/
 .pytest_cache/
 *.tsbuildinfo
+# Supabase & Vercel
+.vercel/
+supabase/.temp/
 

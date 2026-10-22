@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Union
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 import base64
@@ -7,7 +8,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     PORT: int = 8000
     HOST: str = "0.0.0.0"
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3001",
@@ -16,10 +17,20 @@ class Settings(BaseSettings):
         "http://localhost:8001",
     ]
 
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
     # Security
     APP_SECRET_KEY: str = "campus-swap-development-app-secret-jwt-key-2026"
     # 32-byte base64 key for AES-256-GCM contact encryption
     ENCRYPTION_KEY: str = "wG5k93pQZ99b4m2qG9YkL+X1dF5nZ1yF8eK2eL9kM2s="
+
+    # Vercel Cron Authentication
+    CRON_SECRET: str = "campusswap-cron-secret-production-2026"
 
     # Supabase (Optional for local/in-memory mode, required for cloud production)
     SUPABASE_URL: str = ""
