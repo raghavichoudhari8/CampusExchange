@@ -75,14 +75,21 @@ export default function HomePage() {
       count: '65 items',
       desc: 'Textbooks, lab coats, course readers, drafting kits, calculators',
     },
+    {
+      name: 'Canva & Antigravity Subscriptions',
+      slug: 'canva-antigravity-subscriptions',
+      icon: Sparkles,
+      count: '15 seats',
+      desc: 'Canva Pro design team invites, Google Antigravity AI coding seats & cloud developer licenses',
+    },
   ];
 
   const quickSearchTags = [
+    'Canva Pro',
+    'Antigravity AI',
     'TI-84',
     'Mini Fridge',
     'Lab Coat',
-    'Desk Lamp',
-    'Calculus Textbook',
     'Arduino',
   ];
 

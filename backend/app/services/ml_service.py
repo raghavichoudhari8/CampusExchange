@@ -36,7 +36,13 @@ SYNTHETIC_DATA = [
     ("Spotify student family premium plan open slot", "subscriptions-keys"),
     ("Adobe Creative Cloud all apps student subscription seat", "subscriptions-keys"),
     ("Notion Plus workspace student member slot", "subscriptions-keys"),
-    ("Grammarly Premium shared annual student plan", "subscriptions-keys"),
+    # Canva & Antigravity Subscriptions
+    ("Canva Pro educational team invite graphic design brand kit templates", "canva-antigravity-subscriptions"),
+    ("Google Antigravity AI coding assistant developer seat cloud compute agent", "canva-antigravity-subscriptions"),
+    ("Canva Pro subscription student workspace seat", "canva-antigravity-subscriptions"),
+    ("Antigravity AI workspace developer plan", "canva-antigravity-subscriptions"),
+    ("Canva Pro designer license student team invite", "canva-antigravity-subscriptions"),
+    ("Google Antigravity autonomous coding agent developer seat", "canva-antigravity-subscriptions"),
 
     # Room & Flat Essentials
     ("Instant Pot Duo 7-in-1 electric pressure cooker 6 quart", "room-essentials"),

@@ -46,6 +46,17 @@ export default function MarketplacePage() {
       .then(([cats, camps]) => {
         setCategories(cats);
         setCampuses(camps);
+
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const catSlug = params.get('category');
+          if (catSlug) {
+            const matched = cats.find((c) => c.slug === catSlug || c.slug.includes(catSlug));
+            if (matched) setSelectedCategory(matched.id);
+          }
+          const searchQ = params.get('search');
+          if (searchQ) setSearch(searchQ);
+        }
       })
       .catch(console.error);
   }, []);
@@ -116,6 +127,16 @@ export default function MarketplacePage() {
     } else if (action === 'books') {
       const bookCat = categories.find((c) => c.slug.includes('academics'));
       if (bookCat) setSelectedCategory(bookCat.id);
+    } else if (action === 'canva_antigravity') {
+      const canvaCat = categories.find(
+        (c) => c.slug.includes('canva') || c.name.toLowerCase().includes('canva')
+      );
+      if (canvaCat) {
+        setSelectedCategory(canvaCat.id);
+      } else {
+        const subCat = categories.find((c) => c.slug.includes('subscription'));
+        if (subCat) setSelectedCategory(subCat.id);
+      }
     }
   };
 
@@ -203,6 +224,18 @@ export default function MarketplacePage() {
           >
             <BookOpen className="w-3.5 h-3.5 text-purple-500" />
             Textbooks &amp; Academics
+          </button>
+
+          <button
+            onClick={() => handleQuickChip('canva_antigravity')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition flex-shrink-0 ${
+              selectedCategory && categories.find((c) => c.id === selectedCategory)?.slug.includes('canva')
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            Canva &amp; Antigravity Subscriptions
           </button>
         </div>
 

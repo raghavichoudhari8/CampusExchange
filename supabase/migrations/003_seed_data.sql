@@ -30,7 +30,8 @@ INSERT INTO categories (id, name, slug, parent_id, description, icon, sort_order
 ('33333333-0000-0000-0000-000000000002', 'Subscriptions & Software Keys', 'subscriptions-keys', NULL, 'Shared cloud storage, AI tool seats, developer tools & licenses', 'Key', 2),
 ('33333333-0000-0000-0000-000000000003', 'Room & Flat Essentials', 'room-essentials', NULL, 'Appliances, study lamps, induction cookers, mini fridges, kettles', 'Home', 3),
 ('33333333-0000-0000-0000-000000000004', 'Furniture', 'furniture', NULL, 'Study tables, ergonomic chairs, clothes racks, mattresses, bins', 'Armchair', 4),
-('33333333-0000-0000-0000-000000000005', 'Academics & Books', 'academics-books', NULL, 'Textbooks, course readers, lab coats, drawing boards, stationery', 'BookOpen', 5)
+('33333333-0000-0000-0000-000000000005', 'Academics & Books', 'academics-books', NULL, 'Textbooks, course readers, lab coats, drawing boards, stationery', 'BookOpen', 5),
+('33333333-0000-0000-0000-000000000006', 'Canva & Antigravity Subscriptions', 'canva-antigravity-subscriptions', NULL, 'Canva Pro student team invites, Google Antigravity AI coding seats, design tools & developer cloud licenses', 'Sparkles', 6)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Sub-categories for Electronics
@@ -135,6 +136,34 @@ INSERT INTO listings (id, seller_id, campus_id, category_id, title, description,
     'Gates Computer Science Building Cafe',
     'active',
     NOW() + INTERVAL '30 days'
+),
+(
+    '55555555-0000-0000-0000-000000000007',
+    '44444444-0000-0000-0000-000000000002',
+    '22222222-0000-0000-0000-000000000001',
+    '33333333-0000-0000-0000-000000000006',
+    'Canva Pro 1-Year Student Team Seat (Brand Kit & Magic AI)',
+    '2 member invites available on my verified university Canva Pro education team. Full access to background remover, premium stock videos, fonts, and brand kit. Transferred via student email.',
+    299.00,
+    FALSE,
+    'brand_new',
+    'Online Student Email Invite / Tech Lounge',
+    'active',
+    NOW() + INTERVAL '29 days'
+),
+(
+    '55555555-0000-0000-0000-000000000008',
+    '44444444-0000-0000-0000-000000000003',
+    '22222222-0000-0000-0000-000000000002',
+    '33333333-0000-0000-0000-000000000006',
+    'Google Antigravity AI Pro Developer Seat & Compute',
+    'Educational team developer seat for Google Antigravity autonomous coding agent & AI cloud environment. Perfect for CS capstone projects and hackathons. Instant activation.',
+    499.00,
+    FALSE,
+    'brand_new',
+    'Central Computer Center / Online Transfer',
+    'active',
+    NOW() + INTERVAL '30 days'
 )
 ON CONFLICT (id) DO NOTHING;
 
@@ -145,7 +174,9 @@ INSERT INTO listing_images (id, listing_id, image_url, sort_order) VALUES
 ('66666666-0000-0000-0000-000000000003', '55555555-0000-0000-0000-000000000003', 'https://images.unsplash.com/photo-1553406830-ef2513450d76?auto=format&fit=crop&w=800&q=80', 0),
 ('66666666-0000-0000-0000-000000000004', '55555555-0000-0000-0000-000000000004', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80', 0),
 ('66666666-0000-0000-0000-000000000005', '55555555-0000-0000-0000-000000000005', 'https://images.unsplash.com/photo-1580481077195-c3a821a506cb?auto=format&fit=crop&w=800&q=80', 0),
-('66666666-0000-0000-0000-000000000006', '55555555-0000-0000-0000-000000000006', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80', 0)
+('66666666-0000-0000-0000-000000000006', '55555555-0000-0000-0000-000000000006', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80', 0),
+('66666666-0000-0000-0000-000000000007', '55555555-0000-0000-0000-000000000007', 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80', 0),
+('66666666-0000-0000-0000-000000000008', '55555555-0000-0000-0000-000000000008', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80', 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- 7. Insert Wanted Posts

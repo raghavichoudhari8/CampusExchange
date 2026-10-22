@@ -51,11 +51,14 @@ class DatabaseStore:
             {"id": "33333333-0000-0000-0000-000000000003", "name": "Room & Flat Essentials", "slug": "room-essentials", "parent_id": None, "description": "Appliances, study lamps, induction cookers, mini fridges, kettles", "icon": "Home", "sort_order": 3},
             {"id": "33333333-0000-0000-0000-000000000004", "name": "Furniture", "slug": "furniture", "parent_id": None, "description": "Study tables, ergonomic chairs, clothes racks, mattresses, bins", "icon": "Armchair", "sort_order": 4},
             {"id": "33333333-0000-0000-0000-000000000005", "name": "Academics & Books", "slug": "academics-books", "parent_id": None, "description": "Textbooks, course readers, lab coats, drawing boards, stationery", "icon": "BookOpen", "sort_order": 5},
+            {"id": "33333333-0000-0000-0000-000000000006", "name": "Canva & Antigravity Subscriptions", "slug": "canva-antigravity-subscriptions", "parent_id": None, "description": "Canva Pro student team invites, Google Antigravity AI coding seats, design tools & developer cloud licenses", "icon": "Sparkles", "sort_order": 6},
             # Subcategories
             {"id": "33333333-0001-0000-0000-000000000001", "name": "Laptops & Chargers", "slug": "laptops-chargers", "parent_id": "33333333-0000-0000-0000-000000000001", "description": "MacBooks, Windows laptops, USB-C chargers", "icon": "Laptop", "sort_order": 1},
             {"id": "33333333-0001-0000-0000-000000000002", "name": "Calculators (TI-84, Scientific)", "slug": "calculators", "parent_id": "33333333-0000-0000-0000-000000000001", "description": "Graphing and engineering calculators", "icon": "Calculator", "sort_order": 2},
             {"id": "33333333-0001-0000-0000-000000000003", "name": "Arduino & Raspberry Pi Kits", "slug": "microcontrollers", "parent_id": "33333333-0000-0000-0000-000000000001", "description": "Dev boards, sensor starter kits, breadboards", "icon": "Cpu", "sort_order": 3},
             {"id": "33333333-0001-0000-0000-000000000004", "name": "Monitors & Displays", "slug": "monitors", "parent_id": "33333333-0000-0000-0000-000000000001", "description": "Desk displays, HDMI cables", "icon": "Monitor", "sort_order": 4},
+            {"id": "33333333-0001-0000-0000-000000000005", "name": "Canva Pro Team Invites", "slug": "canva-pro", "parent_id": "33333333-0000-0000-0000-000000000006", "description": "Canva Pro student design team seats & templates", "icon": "Sparkles", "sort_order": 5},
+            {"id": "33333333-0001-0000-0000-000000000006", "name": "Google Antigravity AI Seats", "slug": "antigravity-ai", "parent_id": "33333333-0000-0000-0000-000000000006", "description": "Antigravity developer coding seats & cloud agent compute", "icon": "Cpu", "sort_order": 6},
         ]
 
         # 4. Profiles
@@ -251,6 +254,42 @@ class DatabaseStore:
                 "expires_at": (now + timedelta(days=30)).isoformat(),
                 "created_at": now.isoformat(),
                 "updated_at": now.isoformat()
+            },
+            {
+                "id": "55555555-0000-0000-0000-000000000007",
+                "seller_id": "44444444-0000-0000-0000-000000000002",
+                "campus_id": "22222222-0000-0000-0000-000000000001",
+                "category_id": "33333333-0000-0000-0000-000000000006",
+                "title": "Canva Pro 1-Year Student Team Seat (Brand Kit & Magic AI)",
+                "description": "2 member invites available on my verified university Canva Pro education team. Full access to background remover, premium stock videos, fonts, and brand kit. Transferred via student email.",
+                "price": 299.0,
+                "is_free": False,
+                "condition": "brand_new",
+                "location_note": "Online Student Email Invite / Tech Lounge",
+                "status": "active",
+                "spam_score": 0.01,
+                "view_count": 72,
+                "expires_at": (now + timedelta(days=29)).isoformat(),
+                "created_at": (now - timedelta(days=1)).isoformat(),
+                "updated_at": (now - timedelta(days=1)).isoformat()
+            },
+            {
+                "id": "55555555-0000-0000-0000-000000000008",
+                "seller_id": "44444444-0000-0000-0000-000000000003",
+                "campus_id": "22222222-0000-0000-0000-000000000002",
+                "category_id": "33333333-0000-0000-0000-000000000006",
+                "title": "Google Antigravity AI Pro Developer Seat & Compute",
+                "description": "Educational team developer seat for Google Antigravity autonomous coding agent & AI cloud environment. Perfect for CS capstone projects and hackathons. Instant activation.",
+                "price": 499.0,
+                "is_free": False,
+                "condition": "brand_new",
+                "location_note": "Central Computer Center / Online Transfer",
+                "status": "active",
+                "spam_score": 0.02,
+                "view_count": 95,
+                "expires_at": (now + timedelta(days=30)).isoformat(),
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat()
             }
         ]
 
@@ -262,6 +301,8 @@ class DatabaseStore:
             {"id": "66666666-0000-0000-0000-000000000004", "listing_id": "55555555-0000-0000-0000-000000000004", "image_url": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80", "sort_order": 0},
             {"id": "66666666-0000-0000-0000-000000000005", "listing_id": "55555555-0000-0000-0000-000000000005", "image_url": "https://images.unsplash.com/photo-1580481077195-c3a821a506cb?auto=format&fit=crop&w=800&q=80", "sort_order": 0},
             {"id": "66666666-0000-0000-0000-000000000006", "listing_id": "55555555-0000-0000-0000-000000000006", "image_url": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80", "sort_order": 0},
+            {"id": "66666666-0000-0000-0000-000000000007", "listing_id": "55555555-0000-0000-0000-000000000007", "image_url": "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80", "sort_order": 0},
+            {"id": "66666666-0000-0000-0000-000000000008", "listing_id": "55555555-0000-0000-0000-000000000008", "image_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80", "sort_order": 0},
         ]
 
         # 7. Wanted Posts
