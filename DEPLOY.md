@@ -34,12 +34,12 @@ This document tracks the end-to-end production deployment checklist for CampusSw
   - [ ] Verify Resend domain DNS records and configure sender address (`notifications@yourdomain.com`)
   - [ ] Send test transactional email via Resend
 
-- [ ] **Phase 5: Backend Deployment to Vercel (Python Serverless)**
-  - [ ] Configure Vercel Backend project with Root Directory = `backend`
-  - [ ] Set all backend environment variables on Vercel
-  - [ ] Set CORS to allow production frontend and `*.vercel.app` preview branches
-  - [ ] Deploy preview and run smoke tests (health check, public listings, 401 on unauthorized contacts)
-  - [ ] Promote backend to Production
+- [x] **Phase 5: Backend Deployment to Vercel (Python Serverless)**
+  - [x] Configure Vercel Backend project with Root Directory = `backend`
+  - [x] Set all backend environment variables on Vercel
+  - [x] Set CORS to allow production frontend and `*.vercel.app` preview branches
+  - [x] Deploy preview and run smoke tests (health check, public listings, 401 on unauthorized contacts)
+  - [x] Promote backend to Production (`https://campusswap-backend.vercel.app`)
 
 - [ ] **Phase 6: Frontend Deployment to Vercel (Next.js)**
   - [ ] Configure Vercel Frontend project with Root Directory = `frontend`
