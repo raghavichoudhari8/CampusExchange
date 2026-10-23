@@ -17,17 +17,17 @@ This document tracks the end-to-end production deployment checklist for CampusSw
   - [x] Run backend tests after refactoring (16/16 passed)
 
 - [ ] **Phase 2: Production Supabase Setup**
-  - [ ] Provision production Supabase project
-  - [ ] Run Supabase migrations (`001_initial_schema.sql`, `002_rls_policies.sql`, `003_seed_data.sql`)
-  - [ ] Verify Row Level Security (RLS) on all tables (unverified users blocked, contacts shielded)
-  - [ ] Create `listing-images` storage bucket with public read and authenticated write
-  - [ ] Enable Supabase Realtime on `notifications` and `contact_requests` tables
-  - [ ] Generate fresh 32-byte production AES-256-GCM encryption key
+  - [x] Provision production Supabase project (`hepjxowmqzowiqwzkmvi`)
+  - [x] Run Supabase migrations (`001`, `002`, `003`, `004` schemas, seed data & storage)
+  - [x] Verify Row Level Security (RLS) on all tables (unverified users blocked, contacts shielded)
+  - [x] Create `listing-images` storage bucket with public read and authenticated write
+  - [x] Enable Supabase Realtime on `notifications` and `contact_requests` tables
+  - [x] Generate fresh 32-byte production AES-256-GCM encryption key (Configured in Vercel & .env)
 
-- [ ] **Phase 3: Google Cloud OAuth & Supabase Auth URLs**
-  - [ ] Configure Google Cloud OAuth Client ID & Secret
-  - [ ] Set Authorized Redirect URI in Google Console (`https://<project-ref>.supabase.co/auth/v1/callback`)
-  - [ ] Configure Supabase Auth: Site URL and Redirect URLs (Production domain, Vercel preview wildcards)
+- [x] **Phase 3: Google Cloud OAuth & Supabase Auth URLs**
+  - [x] Configure Google Cloud OAuth Client ID & Secret (Google Provider active)
+  - [x] Set Authorized Redirect URI in Google Console (`https://hepjxowmqzowiqwzkmvi.supabase.co/auth/v1/callback`)
+  - [x] Configure Supabase Auth: Site URL and Redirect URLs (`http://localhost:3001/**`, `https://*.vercel.app/**`)
 
 - [ ] **Phase 4: Search & Transactional Email Setup**
   - [ ] Configure Meilisearch Cloud index with filterable/sortable attributes (public fields only)
