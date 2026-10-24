@@ -47,3 +47,5 @@ htmlcov/
 .vercel/
 supabase/.temp/
 
+.vercel
+.env*
