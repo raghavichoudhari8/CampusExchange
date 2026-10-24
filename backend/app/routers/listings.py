@@ -2,6 +2,8 @@ from datetime import datetime, timezone, timedelta
 import uuid
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+import httpx
+from app.config import settings
 from app.database import db
 from app.schemas.listings import (
     ListingCreate,
@@ -122,6 +124,40 @@ async def list_listings(
     Supports search query, category, micro-hub campus filter, condition, price range.
     Rankings prioritize the user's preferred campus micro-hub.
     """
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=3.0) as client:
+                res = client.get(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?select=*&status=eq.{status}",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                    }
+                )
+                if res.status_code == 200:
+                    supa_listings = res.json()
+                    known_ids = {l["id"] for l in db.listings}
+                    for sl in supa_listings:
+                        if sl["id"] not in known_ids:
+                            db.listings.append(sl)
+                            known_ids.add(sl["id"])
+
+                    img_res = client.get(
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images?select=*",
+                        headers={
+                            "apikey": settings.SUPABASE_KEY,
+                            "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                        }
+                    )
+                    if img_res.status_code == 200:
+                        known_img_ids = {img["id"] for img in db.listing_images}
+                        for si in img_res.json():
+                            if si["id"] not in known_img_ids:
+                                db.listing_images.append(si)
+                                known_img_ids.add(si["id"])
+        except Exception:
+            pass
+
     candidates = [l for l in db.listings if l.get("status") == status]
 
     # Category filter
@@ -234,6 +270,48 @@ async def create_listing(
         "created_at": now.isoformat(),
         "updated_at": now.isoformat()
     })
+
+    # Persist to Supabase when configured in cloud environment
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                headers = {
+                    "apikey": settings.SUPABASE_KEY,
+                    "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                }
+                client.post(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings",
+                    headers=headers,
+                    json=new_listing
+                )
+                if payload.images:
+                    img_rows = [{
+                        "id": str(uuid.uuid4()),
+                        "listing_id": listing_id,
+                        "image_url": url,
+                        "sort_order": idx
+                    } for idx, url in enumerate(payload.images)]
+                    client.post(
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images",
+                        headers=headers,
+                        json=img_rows
+                    )
+                client.post(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/contact_details",
+                    headers=headers,
+                    json={
+                        "id": str(uuid.uuid4()),
+                        "listing_id": listing_id,
+                        "user_id": current_user["id"],
+                        "contact_type": payload.contact_type,
+                        "encrypted_contact_value": encrypted_val,
+                        "preferred_note": payload.preferred_note.strip() if payload.preferred_note else None
+                    }
+                )
+        except Exception as e:
+            print("Failed to sync listing to Supabase:", e)
 
     # Sync to Search Service (public fields ONLY)
     await search_service.index_listing(new_listing)

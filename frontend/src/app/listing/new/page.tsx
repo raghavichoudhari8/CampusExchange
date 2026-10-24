@@ -64,9 +64,7 @@ export default function NewListingPage() {
   const [isFree, setIsFree] = useState(false);
   const [condition, setCondition] = useState('good');
   const [locationNote, setLocationNote] = useState('PICT Central Library Front Desk');
-  const [images, setImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
-  ]);
+  const [images, setImages] = useState<string[]>([]);
 
   // Private contact fields
   const [contactType, setContactType] = useState('email');

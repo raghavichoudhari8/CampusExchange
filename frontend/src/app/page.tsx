@@ -209,9 +209,9 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="p-3">
-                <p className="text-3xl sm:text-4xl font-black text-purple-600">5 Hubs</p>
+                <p className="text-3xl sm:text-4xl font-black text-purple-600">PICT</p>
                 <p className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">
-                  Campus Micro-Networks
+                  Campus Micro-Network
                 </p>
               </div>
             </div>

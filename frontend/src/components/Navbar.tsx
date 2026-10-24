@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { user, isVerified, loginDemo, logout } = useAuth();
+  const { user, isVerified, logout } = useAuth();
   const { toast } = useToast();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,16 +39,6 @@ export default function Navbar() {
   if (user?.role === 'admin') {
     navLinks.push({ href: '/admin', label: 'Admin Portal', icon: ShieldAlert, highlight: false });
   }
-
-  const handleDemoSwitch = async (email: string, name: string) => {
-    await loginDemo(email);
-    setUserDropdownOpen(false);
-    toast({
-      type: 'info',
-      title: `Switched Persona: ${name}`,
-      message: `Active session set to ${email}`,
-    });
-  };
 
   const handleLogout = () => {
     logout();
@@ -160,82 +150,6 @@ export default function Navbar() {
                       </div>
                     </div>
 
-                    {/* Switch role preview helper */}
-                    <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70">
-                      <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">
-                        Instant Persona Switcher
-                      </p>
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          onClick={() => handleDemoSwitch('alex.chen@mit.edu', 'Alex Chen')}
-                          className={`text-left text-xs p-2 rounded-xl transition flex items-center justify-between ${
-                            user.email === 'alex.chen@mit.edu'
-                              ? 'bg-indigo-50 border border-indigo-200 font-bold text-indigo-700'
-                              : 'hover:bg-white hover:shadow-2xs text-slate-700'
-                          }`}
-                        >
-                          <div>
-                            <span className="block font-semibold">Alex Chen (MIT)</span>
-                            <span className="text-[10px] text-slate-400">Verified Seller &bull; Next House</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                            .edu
-                          </span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDemoSwitch('priya.sharma@iitb.ac.in', 'Priya Sharma')}
-                          className={`text-left text-xs p-2 rounded-xl transition flex items-center justify-between ${
-                            user.email === 'priya.sharma@iitb.ac.in'
-                              ? 'bg-indigo-50 border border-indigo-200 font-bold text-indigo-700'
-                              : 'hover:bg-white hover:shadow-2xs text-slate-700'
-                          }`}
-                        >
-                          <div>
-                            <span className="block font-semibold">Priya Sharma (IIT Bombay)</span>
-                            <span className="text-[10px] text-slate-400">Verified Buyer &bull; Hostel 12</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                            .ac.in
-                          </span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDemoSwitch('unverified.user@gmail.com', 'Guest User')}
-                          className={`text-left text-xs p-2 rounded-xl transition flex items-center justify-between ${
-                            user.email === 'unverified.user@gmail.com'
-                              ? 'bg-amber-50 border border-amber-200 font-bold text-amber-800'
-                              : 'hover:bg-white hover:shadow-2xs text-slate-700'
-                          }`}
-                        >
-                          <div>
-                            <span className="block font-semibold">Guest (Unverified)</span>
-                            <span className="text-[10px] text-slate-400">Public Browse Only</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                            gmail
-                          </span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDemoSwitch('admin@campusswap.edu', 'Campus Admin')}
-                          className={`text-left text-xs p-2 rounded-xl transition flex items-center justify-between ${
-                            user.email === 'admin@campusswap.edu'
-                              ? 'bg-purple-50 border border-purple-200 font-bold text-purple-800'
-                              : 'hover:bg-white hover:shadow-2xs text-slate-700'
-                          }`}
-                        >
-                          <div>
-                            <span className="block font-semibold">Campus Administrator</span>
-                            <span className="text-[10px] text-slate-400">Moderation, Bans, Audit</span>
-                          </div>
-                          <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
-                            Admin
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-
                     <div className="pt-1.5 px-2">
                       <Link
                         href="/onboarding"
@@ -323,26 +237,13 @@ export default function Navbar() {
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
             {user ? (
               <>
-                <button
-                  onClick={() => {
-                    handleDemoSwitch('alex.chen@mit.edu', 'Alex Chen');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-xs py-2 text-slate-700 hover:text-indigo-600 text-left font-semibold flex items-center justify-between"
+                <Link
+                  href="/onboarding"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-xs py-2 text-slate-700 hover:text-indigo-600 font-semibold"
                 >
-                  <span>Switch to Alex Chen (.edu)</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">MIT</span>
-                </button>
-                <button
-                  onClick={() => {
-                    handleDemoSwitch('priya.sharma@iitb.ac.in', 'Priya Sharma');
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-xs py-2 text-slate-700 hover:text-indigo-600 text-left font-semibold flex items-center justify-between"
-                >
-                  <span>Switch to Priya Sharma (.ac.in)</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">IIT Bombay</span>
-                </button>
+                  Edit Profile Details
+                </Link>
                 <button
                   onClick={() => {
                     handleLogout();

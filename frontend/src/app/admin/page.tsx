@@ -25,7 +25,7 @@ import {
 import Link from 'next/link';
 
 export default function AdminPage() {
-  const { user, loginDemo } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'moderation' | 'domains' | 'users' | 'audit'>('moderation');
 
   // Stats
@@ -145,12 +145,12 @@ export default function AdminPage() {
           <p className="text-xs text-slate-500 mt-2 mb-6">
             The Admin Portal is restricted to verified campus moderators and administrators.
           </p>
-          <button
-            onClick={() => loginDemo('admin@campusswap.edu')}
-            className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-md transition"
+          <Link
+            href="/marketplace"
+            className="inline-block w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition"
           >
-            Switch to Campus Admin Demo Account
-          </button>
+            Return to Marketplace
+          </Link>
         </main>
         <Footer />
       </div>

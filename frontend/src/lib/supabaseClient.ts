@@ -20,3 +20,27 @@ export async function signInWithGoogle() {
 
   return { data, error };
 }
+
+export async function signInWithEmailOtp(email: string) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')) {
+    return { error: new Error('Supabase is not configured.') };
+  }
+
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/onboarding` : undefined,
+    },
+  });
+
+  return { data, error };
+}
+
+export async function verifyEmailOtp(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  });
+  return { data, error };
+}

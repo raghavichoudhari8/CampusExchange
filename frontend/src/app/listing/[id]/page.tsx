@@ -36,8 +36,7 @@ import Link from 'next/link';
 
 export default function ListingDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { user, isVerified, loginDemo } = useAuth();
+  const { user, isVerified } = useAuth();
   const { showSuccess, showError, showInfo } = useToast();
   const listingId = params?.id as string;
 
@@ -508,15 +507,6 @@ export default function ListingDetailPage() {
                     >
                       Log In with College Email
                     </Link>
-                    <button
-                      onClick={() => {
-                        loginDemo('alex.chen@mit.edu');
-                        showSuccess('Logged in as verified MIT student Alex Chen!');
-                      }}
-                      className="w-full py-2 px-3 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
-                    >
-                      Quick Demo: Login as Verified Student
-                    </button>
                   </div>
                 </div>
               )}

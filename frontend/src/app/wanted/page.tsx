@@ -25,7 +25,7 @@ import {
 import Link from 'next/link';
 
 export default function WantedPage() {
-  const { user, isVerified, loginDemo } = useAuth();
+  const { user, isVerified } = useAuth();
   const { showSuccess, showError } = useToast();
   const [posts, setPosts] = useState<WantedPost[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
