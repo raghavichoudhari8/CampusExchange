@@ -8,6 +8,7 @@ import { Campus } from '@/types';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import StatusBadge from '@/components/StatusBadge';
+import Link from 'next/link';
 import { UserCheck, Building, GraduationCap, Sparkles, Check } from 'lucide-react';
 
 export default function OnboardingPage() {
@@ -46,6 +47,10 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setError('Please log in before saving your profile.');
+      return;
+    }
     if (!displayName.trim() || !campusId) {
       setError('Please provide your display name and campus.');
       return;
@@ -101,6 +106,21 @@ export default function OnboardingPage() {
               Set up your public campus identity. Sensitive personal information remains encrypted and hidden.
             </p>
           </div>
+
+          {!user && (
+            <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">Authentication Required</p>
+                <p className="text-xs text-amber-800 mt-0.5">Please sign in to link and customize your student profile.</p>
+              </div>
+              <Link
+                href="/login"
+                className="px-3.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition flex-shrink-0"
+              >
+                Go to Login
+              </Link>
+            </div>
+          )}
 
           {user && (
             <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">

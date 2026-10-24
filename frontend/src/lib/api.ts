@@ -11,9 +11,34 @@ import {
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+export function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  let token = localStorage.getItem('campusswap_token');
+  if (token) return token;
+
+  // Fallback: Check Supabase JS client's stored session in localStorage
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const supaToken = parsed?.access_token;
+          if (typeof supaToken === 'string' && supaToken.length > 0) {
+            localStorage.setItem('campusswap_token', supaToken);
+            return supaToken;
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  return null;
+}
+
 function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('campusswap_token');
+  const token = getStoredToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

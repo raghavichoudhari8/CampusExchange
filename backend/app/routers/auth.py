@@ -162,6 +162,33 @@ def complete_onboarding(
     current_user["batch_year"] = payload.batch_year
     current_user["updated_at"] = datetime.now(timezone.utc).isoformat()
 
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                client.post(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                        "Content-Type": "application/json",
+                        "Prefer": "resolution=merge-duplicates"
+                    },
+                    json={
+                        "id": current_user["id"],
+                        "email": current_user["email"],
+                        "domain": current_user["domain"],
+                        "is_verified": current_user["is_verified"],
+                        "display_name": current_user["display_name"],
+                        "campus_id": current_user["campus_id"],
+                        "hostel_building": current_user["hostel_building"],
+                        "batch_year": current_user["batch_year"],
+                        "role": current_user.get("role", "student"),
+                        "updated_at": current_user["updated_at"]
+                    }
+                )
+        except Exception:
+            pass
+
     badges = compute_user_badges(current_user)
     return UserProfileResponse(
         id=current_user["id"],

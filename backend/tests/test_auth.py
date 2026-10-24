@@ -88,3 +88,16 @@ def test_onboarding_with_custom_other_college():
     data = onboard_res.json()
     assert data["display_name"] == "PICT Student"
     assert data["campus_name"] == "COEP Technological University"
+
+def test_unauthenticated_request_returns_credentials_not_provided():
+    # Calling /me without Authorization header
+    res = client.get("/api/v1/auth/me")
+    assert res.status_code == 401
+    assert "Authentication credentials were not provided" in res.json()["detail"]
+
+def test_invalid_bearer_token_returns_invalid_or_expired():
+    # Calling /me with malformed / forged token
+    res = client.get("/api/v1/auth/me", headers={"Authorization": "Bearer bad.token.here"})
+    assert res.status_code == 401
+    assert "Invalid or expired authentication token" in res.json()["detail"]
+

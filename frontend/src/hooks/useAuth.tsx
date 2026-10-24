@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { UserProfile } from '@/types';
-import { api } from '@/lib/api';
+import { api, getStoredToken } from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -28,12 +29,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('campusswap_token') : null;
+      let token = getStoredToken();
+      if (!token && typeof window !== 'undefined') {
+        // Retrieve session directly from Supabase JS client
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          token = session.access_token;
+          localStorage.setItem('campusswap_token', token);
+        }
+      }
+
       if (!token) {
         setUser(null);
         setLoading(false);
         return;
       }
+
       const profile = await api.getMe();
       setUser(profile);
     } catch (err) {
@@ -48,7 +59,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // 1. Initial user check
     refreshUser();
+
+    // 2. Listen to Supabase auth state changes (e.g. Google OAuth redirect, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.access_token) {
+        localStorage.setItem('campusswap_token', session.access_token);
+        try {
+          const profile = await api.getMe();
+          setUser(profile);
+        } catch (_) {}
+      } else if (event === 'SIGNED_OUT') {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('campusswap_token');
+        }
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, [refreshUser]);
 
   const loginDemo = async (emailOrId: string) => {
@@ -61,10 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('campusswap_token');
     }
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
     setUser(null);
   };
 

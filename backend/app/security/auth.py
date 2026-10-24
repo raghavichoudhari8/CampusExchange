@@ -1,19 +1,33 @@
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, Tuple
 import jwt
+import httpx
 from fastapi import Header, HTTPException, status, Depends
 from app.config import settings
 from app.database import db
 
 JWT_ALGORITHM = "HS256"
 
+_jwk_client: Optional[jwt.PyJWKClient] = None
+
+def get_jwk_client() -> Optional[jwt.PyJWKClient]:
+    """Caches and returns the PyJWKClient for Supabase JWKS asymmetric verification."""
+    global _jwk_client
+    if _jwk_client is None and settings.SUPABASE_URL:
+        try:
+            jwks_url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/.well-known/jwks.json"
+            _jwk_client = jwt.PyJWKClient(jwks_url, cache_keys=True)
+        except Exception:
+            _jwk_client = None
+    return _jwk_client
+
 def check_domain_whitelist(email: str) -> Tuple[bool, Optional[str], Optional[str]]:
     """
     Checks if an email's domain belongs to an allowed institutional domain.
-    Matches exact domains (e.g. iitb.ac.in, mit.edu) or suffix wildcards (.edu, .ac.in, .edu.in).
+    Matches exact domains (e.g. iitb.ac.in, mit.edu, pict.edu) or suffix wildcards (.edu, .ac.in, .edu.in).
     Returns (is_allowed, domain, college_name).
     """
-    if "@" not in email:
+    if not email or "@" not in email:
         return False, None, "Invalid email format"
     
     domain = email.split("@")[-1].strip().lower()
@@ -52,16 +66,102 @@ def create_access_token(user_id: str, email: str, role: str = "student", is_veri
     return jwt.encode(payload, settings.APP_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 def decode_token(token: str) -> Dict[str, Any]:
-    """Decodes JWT, supporting both local secret and Supabase secret."""
+    """
+    Decodes and validates a JWT token.
+    Supports:
+    1. Local app tokens signed with APP_SECRET_KEY (HS256)
+    2. Supabase tokens signed with asymmetric keys (ES256, RS256) via JWKS
+    3. Supabase tokens signed with legacy SUPABASE_JWT_SECRET (HS256)
+    4. Direct Supabase Auth API verification fallback (/auth/v1/user)
+    """
+    clean_token = token.strip()
+
+    # 1. First attempt: Local APP_SECRET_KEY (used by demo login & system jobs)
     try:
-        # First attempt with APP_SECRET_KEY
-        return jwt.decode(token, settings.APP_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return jwt.decode(clean_token, settings.APP_SECRET_KEY, algorithms=[JWT_ALGORITHM])
     except Exception:
         pass
-    
+
+    # 2. Second attempt: Supabase JWKS asymmetric verification (ES256, RS256, HS256)
+    jwk_client = get_jwk_client()
+    if jwk_client:
+        try:
+            signing_key = jwk_client.get_signing_key_from_jwt(clean_token)
+            try:
+                payload = jwt.decode(
+                    clean_token,
+                    signing_key.key,
+                    algorithms=["ES256", "RS256", "HS256"],
+                    audience="authenticated"
+                )
+            except jwt.InvalidAudienceError:
+                payload = jwt.decode(
+                    clean_token,
+                    signing_key.key,
+                    algorithms=["ES256", "RS256", "HS256"],
+                    options={"verify_aud": False}
+                )
+
+            email = payload.get("email", "")
+            is_allowed, domain, college = check_domain_whitelist(email)
+            payload["is_verified"] = is_allowed
+            payload["domain"] = domain or (email.split("@")[-1] if "@" in email else "")
+            return payload
+        except Exception:
+            pass
+
+    # 3. Third attempt: Legacy Supabase JWT Secret (HS256)
     if settings.SUPABASE_JWT_SECRET:
         try:
-            return jwt.decode(token, settings.SUPABASE_JWT_SECRET, algorithms=["HS256"], audience="authenticated")
+            try:
+                payload = jwt.decode(
+                    clean_token,
+                    settings.SUPABASE_JWT_SECRET,
+                    algorithms=["HS256"],
+                    audience="authenticated"
+                )
+            except jwt.InvalidAudienceError:
+                payload = jwt.decode(
+                    clean_token,
+                    settings.SUPABASE_JWT_SECRET,
+                    algorithms=["HS256"],
+                    options={"verify_aud": False}
+                )
+            email = payload.get("email", "")
+            is_allowed, domain, college = check_domain_whitelist(email)
+            payload["is_verified"] = is_allowed
+            payload["domain"] = domain or (email.split("@")[-1] if "@" in email else "")
+            return payload
+        except Exception:
+            pass
+
+    # 4. Fourth attempt: Direct Supabase Auth API verification (/auth/v1/user)
+    if settings.SUPABASE_URL and (settings.SUPABASE_KEY or settings.SUPABASE_ANON_KEY):
+        api_key = settings.SUPABASE_KEY or settings.SUPABASE_ANON_KEY
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                res = client.get(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/user",
+                    headers={
+                        "apikey": api_key,
+                        "Authorization": f"Bearer {clean_token}"
+                    }
+                )
+                if res.status_code == 200:
+                    supa_user = res.json()
+                    user_id = supa_user.get("id")
+                    email = supa_user.get("email", "")
+                    user_meta = supa_user.get("user_metadata", {}) or {}
+                    is_allowed, domain, college = check_domain_whitelist(email)
+                    return {
+                        "sub": user_id,
+                        "email": email,
+                        "role": supa_user.get("role", "student"),
+                        "is_verified": is_allowed,
+                        "domain": domain or (email.split("@")[-1] if "@" in email else ""),
+                        "display_name": user_meta.get("full_name") or user_meta.get("name") or (email.split("@")[0] if email else "Student"),
+                        "avatar_url": user_meta.get("avatar_url")
+                    }
         except Exception:
             pass
 
@@ -97,6 +197,25 @@ async def get_current_user_optional(authorization: Optional[str] = Header(None))
         if not user_id:
             return None
         user = next((p for p in db.profiles if p["id"] == user_id), None)
+        if settings.SUPABASE_URL and settings.SUPABASE_KEY and (not user or not user.get("campus_id")):
+            try:
+                with httpx.Client(timeout=3.0) as client:
+                    res = client.get(
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles?id=eq.{user_id}&select=*",
+                        headers={
+                            "apikey": settings.SUPABASE_KEY,
+                            "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                        }
+                    )
+                    if res.status_code == 200 and res.json():
+                        supa_profile = res.json()[0]
+                        if not user:
+                            user = supa_profile
+                            db.profiles.append(user)
+                        else:
+                            user.update(supa_profile)
+            except Exception:
+                pass
         return user
     except Exception:
         return None
@@ -116,21 +235,43 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject")
     
     user = next((p for p in db.profiles if p["id"] == user_id), None)
+
+    # Sync with Supabase profiles table if available and user is missing or incomplete in memory
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY and (not user or not user.get("campus_id")):
+        try:
+            with httpx.Client(timeout=3.0) as client:
+                res = client.get(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles?id=eq.{user_id}&select=*",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                    }
+                )
+                if res.status_code == 200 and res.json():
+                    supa_profile = res.json()[0]
+                    if not user:
+                        user = supa_profile
+                        db.profiles.append(user)
+                    else:
+                        user.update(supa_profile)
+        except Exception:
+            pass
+
     if not user:
         # If user is in Supabase token but not yet in profiles, construct entry
         user = {
             "id": user_id,
             "email": payload.get("email", ""),
-            "domain": payload.get("email", "").split("@")[-1] if "@" in payload.get("email", "") else "",
+            "domain": payload.get("domain") or (payload.get("email", "").split("@")[-1] if "@" in payload.get("email", "") else ""),
             "is_verified": payload.get("is_verified", False),
-            "display_name": payload.get("email", "").split("@")[0],
+            "display_name": payload.get("display_name") or (payload.get("email", "").split("@")[0] if "@" in payload.get("email", "") else "Student"),
             "campus_id": None,
             "hostel_building": None,
             "batch_year": None,
             "role": payload.get("role", "student"),
             "is_banned": False,
             "avg_response_time_minutes": None,
-            "avatar_url": None,
+            "avatar_url": payload.get("avatar_url"),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
