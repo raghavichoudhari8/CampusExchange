@@ -41,10 +41,10 @@ This document tracks the end-to-end production deployment checklist for CampusSw
   - [x] Deploy preview and run smoke tests (health check, public listings, 401 on unauthorized contacts)
   - [x] Promote backend to Production (`https://campusswap-backend.vercel.app`)
 
-- [ ] **Phase 6: Frontend Deployment to Vercel (Next.js)**
-  - [ ] Configure Vercel Frontend project with Root Directory = `frontend`
-  - [ ] Set frontend environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`)
-  - [ ] Deploy preview, verify live API connectivity, and promote to Production
+- [x] **Phase 6: Frontend Deployment to Vercel (Next.js)**
+  - [x] Configure Vercel Frontend project with Root Directory = `frontend`
+  - [x] Set frontend environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_URL`)
+  - [x] Deploy preview, verify live API connectivity, and promote to Production (`https://campus-exchange-blush.vercel.app`)
   - [ ] (Optional) Attach custom domain and set DNS records
 
 - [ ] **Phase 7: Cron Jobs & GitHub CI/CD**
