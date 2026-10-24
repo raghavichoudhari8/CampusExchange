@@ -160,11 +160,13 @@ export default function OnboardingPage() {
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
                 <option value="">Select your college / campus</option>
-                {campuses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
-                  </option>
-                ))}
+                {campuses
+                  .filter((c) => c.code === 'CAMPUS-PICT' || c.code === 'CAMPUS-OTHER' || c.name.toLowerCase().includes('pict') || c.name.toLowerCase().includes('other'))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
+                    </option>
+                  ))}
               </select>
               <p className="text-[11px] text-slate-500 mt-1">
                 Local listings near your campus will be prioritized.

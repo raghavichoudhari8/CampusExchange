@@ -137,11 +137,13 @@ export default function SearchFilterSidebar({
           className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 bg-white transition"
         >
           <option value="">All Campus Hubs (Global)</option>
-          {campuses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
-            </option>
-          ))}
+          {campuses
+            .filter((c) => c.code === 'CAMPUS-PICT' || c.code === 'CAMPUS-OTHER' || c.name.toLowerCase().includes('pict') || c.name.toLowerCase().includes('other'))
+            .map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
+              </option>
+            ))}
         </select>
         <p className="text-[10px] text-slate-400 mt-1">
           Listings in your micro-hub appear first in search rankings.

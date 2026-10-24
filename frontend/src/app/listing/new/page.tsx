@@ -26,11 +26,12 @@ import {
 } from 'lucide-react';
 
 const PRESET_MEETING_SPOTS = [
-  'Main Campus Library Front Desk',
-  'Student Union / Food Court',
+  'PICT Central Library Front Desk',
+  'PICT Canteen Quadrangle',
+  'PICT A-Building Foyer',
+  'Student Lounge / Reading Room',
   'Engineering Center Atrium',
-  'Dorm Lobby / Reception',
-  'Central Quad Benches',
+  'Dorm / Hostel Reception',
 ];
 
 const SUSPICIOUS_WORDS = [
@@ -62,7 +63,7 @@ export default function NewListingPage() {
   const [price, setPrice] = useState('500');
   const [isFree, setIsFree] = useState(false);
   const [condition, setCondition] = useState('good');
-  const [locationNote, setLocationNote] = useState('Main Campus Library Front Desk');
+  const [locationNote, setLocationNote] = useState('PICT Central Library Front Desk');
   const [images, setImages] = useState<string[]>([
     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
   ]);
@@ -307,11 +308,13 @@ export default function NewListingPage() {
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white"
                   >
-                    {campuses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
-                      </option>
-                    ))}
+                    {campuses
+                      .filter((c) => c.code === 'CAMPUS-PICT' || c.code === 'CAMPUS-OTHER' || c.name.toLowerCase().includes('pict') || c.name.toLowerCase().includes('other'))
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>

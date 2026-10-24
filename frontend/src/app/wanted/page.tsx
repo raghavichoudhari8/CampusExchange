@@ -347,11 +347,13 @@ export default function WantedPage() {
                       onChange={(e) => setCampusId(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     >
-                      {campuses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
+                      {campuses
+                        .filter((c) => c.code === 'CAMPUS-PICT' || c.code === 'CAMPUS-OTHER' || c.name.toLowerCase().includes('pict') || c.name.toLowerCase().includes('other'))
+                        .map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>

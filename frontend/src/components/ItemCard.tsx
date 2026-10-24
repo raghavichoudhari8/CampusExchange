@@ -54,7 +54,7 @@ export default function ItemCard({ listing }: ItemCardProps) {
         <div className="absolute bottom-2.5 left-3 right-3 z-10 flex items-center justify-between text-[11px] text-white/90">
           <span className="flex items-center gap-1 font-semibold truncate drop-shadow-sm">
             <MapPin className="w-3 h-3 text-indigo-300 flex-shrink-0" />
-            <span className="truncate">{listing.campus_name || 'Main Campus'}</span>
+            <span className="truncate">{listing.campus_name || 'PICT'}</span>
           </span>
           <span className="flex items-center gap-1 text-[10px] bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/10">
             <Eye className="w-2.5 h-2.5 text-slate-300" />

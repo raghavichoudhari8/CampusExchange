@@ -19,7 +19,7 @@ def test_wanted_posts_flow():
         "title": "Need TI-84 or Casio FX-991EX Calculator",
         "description": "Midterms approaching next week. Needed urgently for 2 weeks or to purchase.",
         "category_id": "33333333-0000-0000-0000-000000000001",
-        "campus_id": "22222222-0000-0000-0000-000000000002",
+        "campus_id": "22222222-0000-0000-0000-000000000005",
         "budget_max": 25.0
     }
     res = client.post(
@@ -45,7 +45,7 @@ def test_listing_expiry_scan():
     expired_listing = {
         "id": "99999999-0000-0000-0000-000000000099",
         "seller_id": "44444444-0000-0000-0000-000000000002",
-        "campus_id": "22222222-0000-0000-0000-000000000001",
+        "campus_id": "22222222-0000-0000-0000-000000000005",
         "category_id": "33333333-0000-0000-0000-000000000001",
         "title": "Old Expired Textbook",
         "description": "Past 30 days old item",

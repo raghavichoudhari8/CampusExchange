@@ -187,5 +187,12 @@ def get_allowed_domains():
 
 @router.get("/campuses")
 def get_campuses():
-    """Returns list of campuses for onboarding and micro-hub filtering."""
-    return db.campuses
+    """Returns list of campuses for onboarding and micro-hub filtering (strictly PICT and Other College)."""
+    allowed_ids = {
+        "22222222-0000-0000-0000-000000000005",
+        "22222222-0000-0000-0000-000000000099"
+    }
+    return [
+        c for c in db.campuses
+        if c.get("id") in allowed_ids or c.get("code") in ("CAMPUS-PICT", "CAMPUS-OTHER")
+    ]

@@ -331,7 +331,7 @@ export default function ListingDetailPage() {
                   <p className="text-xs text-slate-700 font-medium mt-0.5">{listing.location_note}</p>
                   <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
                     <Building className="w-3 h-3 text-slate-400" />
-                    Campus: {listing.campus_name || 'Main Campus'}
+                    Campus: {listing.campus_name || 'PICT'}
                   </p>
                 </div>
               </div>

@@ -62,9 +62,10 @@ def test_get_campuses_includes_pict():
     res = client.get("/api/v1/auth/campuses")
     assert res.status_code == 200
     campuses = res.json()
+    assert len(campuses) == 2
     campus_names = [c["name"] for c in campuses]
-    assert any("PICT" in name for name in campus_names)
-    assert any("Other College" in name for name in campus_names)
+    assert "PICT - Pune Institute of Computer Technology" in campus_names
+    assert "Other College" in campus_names
 
 def test_onboarding_with_custom_other_college():
     # Login demo user
