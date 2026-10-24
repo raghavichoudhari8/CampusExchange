@@ -17,6 +17,7 @@ export default function OnboardingPage() {
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [displayName, setDisplayName] = useState('');
   const [campusId, setCampusId] = useState('');
+  const [customCampusName, setCustomCampusName] = useState('');
   const [hostelBuilding, setHostelBuilding] = useState('');
   const [batchYear, setBatchYear] = useState<number>(2026);
   const [submitting, setSubmitting] = useState(false);
@@ -36,10 +37,21 @@ export default function OnboardingPage() {
     }
   }, [user, campuses]);
 
+  const selectedCampusObj = campuses.find((c) => c.id === campusId);
+  const isOtherCollege = Boolean(
+    selectedCampusObj?.name.toLowerCase().includes('other') ||
+    campusId === '22222222-0000-0000-0000-000000000099' ||
+    campusId === 'other'
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim() || !campusId) {
       setError('Please provide your display name and campus.');
+      return;
+    }
+    if (isOtherCollege && !customCampusName.trim()) {
+      setError('Please enter your college name.');
       return;
     }
     setSubmitting(true);
@@ -48,6 +60,7 @@ export default function OnboardingPage() {
       await api.updateOnboarding({
         display_name: displayName.trim(),
         campus_id: campusId,
+        custom_campus_name: isOtherCollege ? customCampusName.trim() : undefined,
         hostel_building: hostelBuilding.trim() || undefined,
         batch_year: Number(batchYear),
       });
@@ -138,7 +151,7 @@ export default function OnboardingPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Campus / Micro-Hub
+                College / Campus Micro-Hub
               </label>
               <select
                 value={campusId}
@@ -146,16 +159,35 @@ export default function OnboardingPage() {
                 required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
-                <option value="">Select your campus</option>
+                <option value="">Select your college / campus</option>
                 {campuses.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.city})
+                    {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
                   </option>
                 ))}
               </select>
               <p className="text-[11px] text-slate-500 mt-1">
                 Local listings near your campus will be prioritized.
               </p>
+
+              {isOtherCollege && (
+                <div className="mt-3 p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-200">
+                  <label className="block text-xs font-bold text-indigo-900 uppercase tracking-wider mb-1">
+                    Enter Your College Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customCampusName}
+                    onChange={(e) => setCustomCampusName(e.target.value)}
+                    placeholder="e.g. PICT-pune institute of computer technology, COEP, VJTI..."
+                    className="w-full px-3.5 py-2 rounded-lg border border-indigo-300 text-sm focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-white"
+                  />
+                  <p className="text-[11px] text-indigo-700 mt-1">
+                    Your college will be added to CampusSwap so other students from your campus can connect with you.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

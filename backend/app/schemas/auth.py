@@ -25,6 +25,7 @@ class DomainCheckResponse(BaseModel):
 class OnboardingRequest(BaseModel):
     display_name: str = Field(..., min_length=2, max_length=100)
     campus_id: str
+    custom_campus_name: Optional[str] = Field(None, max_length=150)
     hostel_building: Optional[str] = Field(None, max_length=100)
     batch_year: int = Field(..., ge=2000, le=2035)
 

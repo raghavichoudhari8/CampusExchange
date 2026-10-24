@@ -57,3 +57,33 @@ def test_unverified_user_login():
     assert res.status_code == 200
     token_data = res.json()
     assert token_data["is_verified"] is False
+
+def test_get_campuses_includes_pict():
+    res = client.get("/api/v1/auth/campuses")
+    assert res.status_code == 200
+    campuses = res.json()
+    campus_names = [c["name"] for c in campuses]
+    assert any("PICT" in name for name in campus_names)
+    assert any("Other College" in name for name in campus_names)
+
+def test_onboarding_with_custom_other_college():
+    # Login demo user
+    res = client.post("/api/v1/auth/login-demo", json={"user_id_or_email": "alex.chen@mit.edu"})
+    token = res.json()["access_token"]
+
+    # Submit onboarding with Other College and custom name
+    onboard_res = client.post(
+        "/api/v1/auth/onboarding",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "display_name": "PICT Student",
+            "campus_id": "22222222-0000-0000-0000-000000000099",
+            "custom_campus_name": "COEP Technological University",
+            "hostel_building": "Hostel B",
+            "batch_year": 2026
+        }
+    )
+    assert onboard_res.status_code == 200
+    data = onboard_res.json()
+    assert data["display_name"] == "PICT Student"
+    assert data["campus_name"] == "COEP Technological University"

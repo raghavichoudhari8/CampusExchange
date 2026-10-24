@@ -309,7 +309,7 @@ export default function NewListingPage() {
                   >
                     {campuses.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.city})
+                        {c.name} {c.city && c.city !== 'Other' ? `(${c.city})` : ''}
                       </option>
                     ))}
                   </select>

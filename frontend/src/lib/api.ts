@@ -70,6 +70,7 @@ export const api = {
   async updateOnboarding(data: {
     display_name: string;
     campus_id: string;
+    custom_campus_name?: string;
     hostel_building?: string;
     batch_year: number;
   }): Promise<UserProfile> {

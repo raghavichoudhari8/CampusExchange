@@ -34,14 +34,17 @@ class DatabaseStore:
             {"id": "11111111-0000-0000-0000-000000000006", "domain": "stanford.edu", "college_name": "Stanford University", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000007", "domain": "berkeley.edu", "college_name": "UC Berkeley", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000008", "domain": "campusswap.edu", "college_name": "CampusSwap Demo Institute", "is_active": True, "created_at": now.isoformat()},
+            {"id": "11111111-0000-0000-0000-000000000009", "domain": "pict.edu", "college_name": "PICT - Pune Institute of Computer Technology", "is_active": True, "created_at": now.isoformat()},
         ]
 
         # 2. Campuses
         self.campuses = [
+            {"id": "22222222-0000-0000-0000-000000000005", "name": "PICT - Pune Institute of Computer Technology", "code": "CAMPUS-PICT", "city": "Pune", "created_at": now.isoformat()},
             {"id": "22222222-0000-0000-0000-000000000001", "name": "Main Campus - Tech Hub", "code": "CAMPUS-MAIN", "city": "Cambridge", "created_at": now.isoformat()},
             {"id": "22222222-0000-0000-0000-000000000002", "name": "Powai Campus", "code": "CAMPUS-POWAI", "city": "Mumbai", "created_at": now.isoformat()},
             {"id": "22222222-0000-0000-0000-000000000003", "name": "North Quad Campus", "code": "CAMPUS-NORTH", "city": "Berkeley", "created_at": now.isoformat()},
             {"id": "22222222-0000-0000-0000-000000000004", "name": "South Medical Campus", "code": "CAMPUS-SOUTH", "city": "Boston", "created_at": now.isoformat()},
+            {"id": "22222222-0000-0000-0000-000000000099", "name": "Other College", "code": "CAMPUS-OTHER", "city": "Other", "created_at": now.isoformat()},
         ]
 
         # 3. Categories

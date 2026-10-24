@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 import uuid
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
+import httpx
+from app.config import settings
 from app.database import db
 from app.schemas.auth import (
     Token,
@@ -119,13 +121,43 @@ def complete_onboarding(
     """
     Completes or updates onboarding information: display name, campus hub, hostel/building, batch year.
     """
-    # Verify campus exists
+    # Verify campus exists or resolve custom campus
     campus = next((c for c in db.campuses if c["id"] == payload.campus_id), None)
+    if (not campus or campus["id"] == "22222222-0000-0000-0000-000000000099" or payload.campus_id == "other") and payload.custom_campus_name:
+        custom_name = payload.custom_campus_name.strip()
+        existing_campus = next((c for c in db.campuses if c["name"].lower() == custom_name.lower()), None)
+        if existing_campus:
+            campus = existing_campus
+        else:
+            campus = {
+                "id": str(uuid.uuid4()),
+                "name": custom_name,
+                "code": f"CAMPUS-{uuid.uuid4().hex[:6].upper()}",
+                "city": "Other",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            db.campuses.append(campus)
+            if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+                try:
+                    with httpx.Client(timeout=4.0) as client:
+                        client.post(
+                            f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/campuses",
+                            headers={
+                                "apikey": settings.SUPABASE_KEY,
+                                "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                                "Content-Type": "application/json",
+                                "Prefer": "resolution=merge-duplicates"
+                            },
+                            json=campus
+                        )
+                except Exception:
+                    pass
+
     if not campus:
         raise HTTPException(status_code=400, detail="Invalid campus ID selected")
 
     current_user["display_name"] = payload.display_name
-    current_user["campus_id"] = payload.campus_id
+    current_user["campus_id"] = campus["id"]
     current_user["hostel_building"] = payload.hostel_building
     current_user["batch_year"] = payload.batch_year
     current_user["updated_at"] = datetime.now(timezone.utc).isoformat()
