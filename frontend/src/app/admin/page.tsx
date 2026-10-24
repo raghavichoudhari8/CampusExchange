@@ -57,12 +57,11 @@ export default function AdminPage() {
       setAuditLogs(logs);
 
       // Fetch users list
-      const token = localStorage.getItem('campusswap_token');
-      const resUsers = await fetch('http://localhost:8000/api/v1/admin/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (resUsers.ok) {
-        setUsersList(await resUsers.json());
+      try {
+        const users = await api.getAdminUsers();
+        setUsersList(users);
+      } catch (userErr) {
+        console.warn('Could not load users list:', userErr);
       }
     } catch (err) {
       console.error(err);
@@ -100,22 +99,7 @@ export default function AdminPage() {
     if (!newDomain.trim() || !newCollegeName.trim()) return;
     setAddingDomain(true);
     try {
-      const token = localStorage.getItem('campusswap_token');
-      const res = await fetch('http://localhost:8000/api/v1/admin/allowed-domains', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          domain: newDomain.trim(),
-          college_name: newCollegeName.trim(),
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Failed to add domain');
-      }
+      await api.addAllowedDomain(newDomain.trim(), newCollegeName.trim());
       setNewDomain('');
       setNewCollegeName('');
       await loadAdminData();
@@ -128,11 +112,7 @@ export default function AdminPage() {
 
   const handleDeleteDomain = async (id: string) => {
     try {
-      const token = localStorage.getItem('campusswap_token');
-      await fetch(`http://localhost:8000/api/v1/admin/allowed-domains/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.deleteAllowedDomain(id);
       await loadAdminData();
     } catch (err: any) {
       alert(err.message);
@@ -142,12 +122,7 @@ export default function AdminPage() {
   const handleRunExpiryScan = async () => {
     setRunningExpiry(true);
     try {
-      const token = localStorage.getItem('campusswap_token');
-      const res = await fetch('http://localhost:8000/api/v1/admin/run-expiry-check', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await api.runExpiryCheck();
       alert(`Auto-expiry scan complete! Expired ${data.expired_listings} listings. Sent ${data.reminders_sent} reminder emails.`);
       await loadAdminData();
     } catch (err: any) {

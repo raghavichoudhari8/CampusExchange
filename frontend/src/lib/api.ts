@@ -9,7 +9,7 @@ import {
   DomainCheckResult,
 } from '@/types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function getAuthHeader(): Record<string, string> {
   if (typeof window === 'undefined') return {};
@@ -200,5 +200,28 @@ export const api = {
 
   async getAuditLogs(): Promise<any[]> {
     return request<any[]>('/api/v1/admin/audit-logs');
+  },
+
+  async getAdminUsers(): Promise<any[]> {
+    return request<any[]>('/api/v1/admin/users');
+  },
+
+  async addAllowedDomain(domain: string, college_name: string): Promise<any> {
+    return request<any>('/api/v1/admin/allowed-domains', {
+      method: 'POST',
+      body: JSON.stringify({ domain, college_name }),
+    });
+  },
+
+  async deleteAllowedDomain(id: string): Promise<any> {
+    return request<any>(`/api/v1/admin/allowed-domains/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async runExpiryCheck(): Promise<any> {
+    return request<any>('/api/v1/admin/run-expiry-check', {
+      method: 'POST',
+    });
   },
 };
