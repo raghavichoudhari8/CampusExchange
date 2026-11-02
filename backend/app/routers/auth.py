@@ -19,6 +19,7 @@ from app.security.auth import (
     get_current_user,
     compute_user_badges,
 )
+from app.services.profile_service import ensure_profile_in_supabase
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication & Verification"])
 
@@ -156,30 +157,7 @@ def institutional_login(payload: DemoLoginRequest):
     # Persist profile to Supabase
     if settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
-            with httpx.Client(timeout=4.0) as client:
-                client.post(
-                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
-                    headers={
-                        "apikey": settings.SUPABASE_KEY,
-                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "resolution=merge-duplicates"
-                    },
-                    json={
-                        "id": user["id"],
-                        "email": user["email"],
-                        "domain": user["domain"],
-                        "is_verified": True,
-                        "display_name": user["display_name"],
-                        "campus_id": user["campus_id"],
-                        "hostel_building": user.get("hostel_building"),
-                        "batch_year": user.get("batch_year"),
-                        "role": user.get("role", "student"),
-                        "is_banned": False,
-                        "created_at": user.get("created_at") or now.isoformat(),
-                        "updated_at": now.isoformat()
-                    }
-                )
+            ensure_profile_in_supabase(user)
         except Exception as e:
             print("Failed to sync profile in institutional login:", e)
 
@@ -277,30 +255,9 @@ def complete_onboarding(
 
     if settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
-            with httpx.Client(timeout=4.0) as client:
-                client.post(
-                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
-                    headers={
-                        "apikey": settings.SUPABASE_KEY,
-                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "resolution=merge-duplicates"
-                    },
-                    json={
-                        "id": current_user["id"],
-                        "email": current_user["email"],
-                        "domain": current_user["domain"],
-                        "is_verified": current_user["is_verified"],
-                        "display_name": current_user["display_name"],
-                        "campus_id": current_user["campus_id"],
-                        "hostel_building": current_user["hostel_building"],
-                        "batch_year": current_user["batch_year"],
-                        "role": current_user.get("role", "student"),
-                        "updated_at": current_user["updated_at"]
-                    }
-                )
-        except Exception:
-            pass
+            ensure_profile_in_supabase(current_user, campus_id=campus["id"])
+        except Exception as e:
+            print("Failed to sync profile in onboarding:", e)
 
     badges = compute_user_badges(current_user)
     return UserProfileResponse(

@@ -20,6 +20,7 @@ from app.security.auth import (
 )
 from app.security.encryption import encrypt_contact, decrypt_contact
 from app.services.search_service import search_service
+from app.services.profile_service import ensure_profile_in_supabase
 
 router = APIRouter(prefix="/api/v1/listings", tags=["Listings"])
 
@@ -293,11 +294,15 @@ async def create_listing(
     campus = next((c for c in db.campuses if c["id"] == payload.campus_id), None)
     campus_id = campus["id"] if campus else "22222222-0000-0000-0000-000000000005"
 
+    # Verify category exists or fall back to first category
+    category = next((c for c in db.categories if c["id"] == payload.category_id), None)
+    category_id = category["id"] if category else (db.categories[0]["id"] if db.categories else "33333333-0000-0000-0000-000000000001")
+
     new_listing = {
         "id": listing_id,
         "seller_id": current_user["id"],
         "campus_id": campus_id,
-        "category_id": payload.category_id,
+        "category_id": category_id,
         "title": payload.title.strip(),
         "description": payload.description.strip(),
         "price": 0.0 if payload.is_free else payload.price,
@@ -339,31 +344,17 @@ async def create_listing(
     # Persist to Supabase when configured in cloud environment
     if settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
+            # 1. Guarantee user profile exists in Supabase before creating listing
+            profile_synced = ensure_profile_in_supabase(current_user, campus_id=campus_id)
+            if not profile_synced:
+                print(f"Warning: ensure_profile_in_supabase returned False for user {current_user.get('id')}")
+
             with httpx.Client(timeout=8.0) as client:
                 headers = {
                     "apikey": settings.SUPABASE_KEY,
                     "Authorization": f"Bearer {settings.SUPABASE_KEY}",
                     "Content-Type": "application/json"
                 }
-                # 1. Ensure user profile exists in Supabase to satisfy listings_seller_id_fkey
-                client.post(
-                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
-                    headers={**headers, "Prefer": "resolution=merge-duplicates"},
-                    json={
-                        "id": current_user["id"],
-                        "email": current_user.get("email", ""),
-                        "domain": current_user.get("domain", ""),
-                        "is_verified": current_user.get("is_verified", True),
-                        "display_name": current_user.get("display_name") or "Student",
-                        "campus_id": campus_id,
-                        "hostel_building": current_user.get("hostel_building"),
-                        "batch_year": current_user.get("batch_year"),
-                        "role": current_user.get("role", "student"),
-                        "is_banned": False,
-                        "created_at": current_user.get("created_at") or now.isoformat(),
-                        "updated_at": now.isoformat()
-                    }
-                )
 
                 # 2. Persist the listing record
                 res = client.post(

@@ -327,30 +327,8 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[
         # Immediately persist profile to Supabase to prevent foreign key errors on listings
         if settings.SUPABASE_URL and settings.SUPABASE_KEY:
             try:
-                with httpx.Client(timeout=4.0) as client:
-                    client.post(
-                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
-                        headers={
-                            "apikey": settings.SUPABASE_KEY,
-                            "Authorization": f"Bearer {settings.SUPABASE_KEY}",
-                            "Content-Type": "application/json",
-                            "Prefer": "resolution=merge-duplicates"
-                        },
-                        json={
-                            "id": user["id"],
-                            "email": user["email"],
-                            "domain": user["domain"],
-                            "is_verified": user["is_verified"],
-                            "display_name": user["display_name"],
-                            "campus_id": user["campus_id"],
-                            "hostel_building": user["hostel_building"],
-                            "batch_year": user["batch_year"],
-                            "role": user["role"],
-                            "is_banned": user["is_banned"],
-                            "created_at": user["created_at"],
-                            "updated_at": user["updated_at"]
-                        }
-                    )
+                from app.services.profile_service import ensure_profile_in_supabase
+                ensure_profile_in_supabase(user)
             except Exception as e:
                 print("Failed to auto-upsert profile to Supabase:", e)
 

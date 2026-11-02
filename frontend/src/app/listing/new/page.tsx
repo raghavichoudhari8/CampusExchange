@@ -131,11 +131,14 @@ export default function NewListingPage() {
     setError(null);
 
     try {
+      const safeCampusId = campusId || user?.campus_id || (campuses[0]?.id || '22222222-0000-0000-0000-000000000005');
+      const safeCategoryId = categoryId || (categories[0]?.id || '33333333-0000-0000-0000-000000000001');
+
       const created = await api.createListing({
         title: title.trim(),
         description: description.trim(),
-        category_id: categoryId,
-        campus_id: campusId,
+        category_id: safeCategoryId,
+        campus_id: safeCampusId,
         price: isFree ? 0 : parseFloat(price) || 0,
         is_free: isFree,
         condition,
