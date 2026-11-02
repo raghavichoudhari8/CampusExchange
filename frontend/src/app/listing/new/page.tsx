@@ -167,13 +167,13 @@ export default function NewListingPage() {
       <Navbar />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
-        <AuthGuard fallbackMessage="Only verified college students with an approved institutional email (.edu, .ac.in) can create marketplace listings.">
+        <AuthGuard fallbackMessage="Please sign in with your Google account or college email to create marketplace listings.">
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 sm:p-10 space-y-8">
             {/* Header */}
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-2">
                 <PlusCircle className="w-3.5 h-3.5" />
-                Verified Student Listing
+                Verified Campus Listing
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 Post an Item on Campus

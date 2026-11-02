@@ -137,7 +137,7 @@ export default function OnboardingPage() {
 
           {!isVerified && user && (
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-              <strong>Notice:</strong> Your current email domain (<span className="font-mono">@{user.domain}</span>) is not an approved institutional domain. You can browse public listings, but you will not be able to post items or request contact details until you log in with an approved college email.
+              <strong>Notice:</strong> Your current email domain (<span className="font-mono">@{user.domain}</span>) is not yet verified. Please sign in with your Google account or college email to post items and connect with sellers.
             </div>
           )}
 

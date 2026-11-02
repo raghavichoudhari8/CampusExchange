@@ -23,16 +23,21 @@ def get_jwk_client() -> Optional[jwt.PyJWKClient]:
 
 def check_domain_whitelist(email: str) -> Tuple[bool, Optional[str], Optional[str]]:
     """
-    Checks if an email's domain belongs to an allowed institutional domain.
-    Matches exact domains (e.g. iitb.ac.in, mit.edu, pict.edu) or suffix wildcards (.edu, .ac.in, .edu.in).
+    Checks if an email's domain belongs to an allowed institutional or Google domain.
+    Matches exact domains (e.g. gmail.com, googlemail.com, ms.pict.edu, pict.edu, iitb.ac.in)
+    or suffix wildcards (.edu, .ac.in, .edu.in).
     Returns (is_allowed, domain, college_name).
     """
     if not email or "@" not in email:
         return False, None, "Invalid email format"
     
     domain = email.split("@")[-1].strip().lower()
+
+    # Special check for Google / Gmail accounts (allows everyone with Google accounts to log in and trade)
+    if domain in ("gmail.com", "googlemail.com"):
+        return True, domain, "Google Account (Verified User)"
     
-    # 1. Check exact domain matches first (e.g. ms.pict.edu, pict.edu, iitb.ac.in)
+    # 1. Check exact domain matches first (e.g. ms.pict.edu, pict.edu, iitb.ac.in, gmail.com)
     for record in db.allowed_domains:
         if not record.get("is_active", True):
             continue
@@ -107,7 +112,13 @@ def decode_token(token: str) -> Dict[str, Any]:
                 )
 
             email = payload.get("email", "")
+            app_meta = payload.get("app_metadata", {}) or {}
+            is_google_provider = app_meta.get("provider") == "google" or "google" in app_meta.get("providers", [])
             is_allowed, domain, college = check_domain_whitelist(email)
+            if is_google_provider:
+                is_allowed = True
+                college = college or "Google Account (Verified User)"
+
             payload["is_verified"] = is_allowed
             payload["domain"] = domain or (email.split("@")[-1] if "@" in email else "")
             return payload
@@ -132,7 +143,13 @@ def decode_token(token: str) -> Dict[str, Any]:
                     options={"verify_aud": False}
                 )
             email = payload.get("email", "")
+            app_meta = payload.get("app_metadata", {}) or {}
+            is_google_provider = app_meta.get("provider") == "google" or "google" in app_meta.get("providers", [])
             is_allowed, domain, college = check_domain_whitelist(email)
+            if is_google_provider:
+                is_allowed = True
+                college = college or "Google Account (Verified User)"
+
             payload["is_verified"] = is_allowed
             payload["domain"] = domain or (email.split("@")[-1] if "@" in email else "")
             return payload
@@ -156,7 +173,13 @@ def decode_token(token: str) -> Dict[str, Any]:
                     user_id = supa_user.get("id")
                     email = supa_user.get("email", "")
                     user_meta = supa_user.get("user_metadata", {}) or {}
+                    app_meta = supa_user.get("app_metadata", {}) or {}
+                    is_google_provider = app_meta.get("provider") == "google" or "google" in app_meta.get("providers", [])
                     is_allowed, domain, college = check_domain_whitelist(email)
+                    if is_google_provider:
+                        is_allowed = True
+                        college = college or "Google Account (Verified User)"
+
                     return {
                         "sub": user_id,
                         "email": email,
@@ -260,6 +283,25 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[
                         user.update(supa_profile)
         except Exception:
             pass
+
+    if user:
+        # Auto-upgrade verification for users signing in via Google or approved domains
+        if not user.get("is_verified") and payload.get("is_verified"):
+            user["is_verified"] = True
+            if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+                try:
+                    with httpx.Client(timeout=3.0) as client:
+                        client.patch(
+                            f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles?id=eq.{user_id}",
+                            headers={
+                                "apikey": settings.SUPABASE_KEY,
+                                "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                                "Content-Type": "application/json"
+                            },
+                            json={"is_verified": True}
+                        )
+                except Exception:
+                    pass
 
     if not user:
         # Default campus to PICT if verified student

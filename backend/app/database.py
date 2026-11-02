@@ -36,6 +36,8 @@ class DatabaseStore:
             {"id": "11111111-0000-0000-0000-000000000006", "domain": "stanford.edu", "college_name": "Stanford University", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000008", "domain": "ms.pict.edu", "college_name": "PICT - Pune Institute of Computer Technology", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000009", "domain": "pict.edu", "college_name": "PICT - Pune Institute of Computer Technology", "is_active": True, "created_at": now.isoformat()},
+            {"id": "11111111-0000-0000-0000-000000000010", "domain": "gmail.com", "college_name": "Google Account (Verified User)", "is_active": True, "created_at": now.isoformat()},
+            {"id": "11111111-0000-0000-0000-000000000011", "domain": "googlemail.com", "college_name": "Google Account (Verified User)", "is_active": True, "created_at": now.isoformat()},
         ]
 
         # 2. Campuses (Only PICT and Other College)

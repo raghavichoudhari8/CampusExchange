@@ -570,17 +570,17 @@ export default function ListingDetailPage() {
                 <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-3">
                   <ShieldCheck className="w-8 h-8 text-indigo-600 mx-auto" />
                   <h3 className="text-xs font-bold text-slate-900 uppercase">
-                    College Verification Required
+                    Account Sign-In Required
                   </h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    To maintain strict campus safety, contact details can only be requested by verified students with an approved college email.
+                    Sign in with your Google account or college email to contact the seller and buy items safely.
                   </p>
                   <div className="flex flex-col gap-2 pt-1">
                     <Link
                       href="/login"
                       className="w-full py-2.5 px-3 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition shadow-sm"
                     >
-                      Log In with College Email
+                      Log In with Google or College Email
                     </Link>
                   </div>
                 </div>

@@ -15,12 +15,12 @@ def test_domain_whitelist_matching():
     allowed, domain, college = check_domain_whitelist("rahul@iitb.ac.in")
     assert allowed is True
 
-    # Generic unverified provider
-    allowed, domain, college = check_domain_whitelist("scammer@gmail.com")
-    assert allowed is False
+    # Google / Gmail provider (enabled for everyone)
+    allowed, domain, college = check_domain_whitelist("student@gmail.com")
+    assert allowed is True
     assert domain == "gmail.com"
 
-    # Yahoo
+    # Unauthorized provider (e.g. Yahoo / Outlook / random)
     allowed, domain, college = check_domain_whitelist("buyer@yahoo.com")
     assert allowed is False
 

@@ -168,10 +168,10 @@ export default function LoginPage() {
           </div>
         </div>
         <h2 className="mt-4 text-center text-3xl font-extrabold text-slate-900 tracking-tight">
-          College Verification &amp; Login
+          Welcome to CampusSwap
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600 max-w-sm mx-auto">
-          CampusSwap is exclusively for verified college students. Sign in with your official college email.
+          Sign in with your Google account or college email to buy, sell, and connect across campus.
         </p>
       </div>
 
@@ -198,10 +198,10 @@ export default function LoginPage() {
             <div className="p-4 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl border border-indigo-200 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-indigo-950 font-bold text-xs">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                <span>Instant Institutional College Login</span>
+                <span>Instant Account Login</span>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Supabase email rate limit was exceeded. Since your email belongs to a verified institutional domain, you can log in directly without waiting for an email code:
+                Supabase email rate limit was reached. You can sign in instantly with Google or enter directly using Fast-Track Login:
               </p>
               <button
                 type="button"
@@ -219,18 +219,18 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Google Workspace / OAuth Sign In */}
+          {/* Google / Gmail Sign In */}
           <div>
             <button
               onClick={handleGoogleSignIn}
               type="button"
               disabled={oauthLoading}
-              className="w-full flex justify-center items-center gap-3 py-2.5 px-4 border border-slate-300 rounded-xl shadow-sm bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
+              className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-slate-300 rounded-xl shadow-sm bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition disabled:opacity-50"
             >
               {oauthLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
               ) : (
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -249,8 +249,11 @@ export default function LoginPage() {
                   />
                 </svg>
               )}
-              Sign in with Google OAuth
+              Sign in with Google (Any Google / Gmail account)
             </button>
+            <p className="text-center text-[11px] text-slate-500 mt-2 font-medium">
+              Everyone can sign in instantly using any Google or Gmail account
+            </p>
           </div>
 
           <div className="relative">
@@ -259,7 +262,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white px-2 text-slate-400 font-semibold">
-                Or Sign In with College Email OTP
+                Or Sign In with Email OTP
               </span>
             </div>
           </div>
@@ -269,14 +272,14 @@ export default function LoginPage() {
             <form onSubmit={handleSendOtp} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Institutional College Email
+                  Email Address (Gmail or College Email)
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input
                     type="email"
                     required
-                    placeholder="student@pict.edu or yourname@college.edu"
+                    placeholder="yourname@gmail.com or student@pict.edu"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
                     className="block w-full rounded-xl border border-slate-300 pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -355,12 +358,12 @@ export default function LoginPage() {
           <div className="bg-indigo-50/60 rounded-xl p-4 border border-indigo-100">
             <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5 mb-2">
               <ShieldCheck className="w-4 h-4 text-indigo-600" />
-              Check Your College Email Domain
+              Check Your Email Domain
             </h3>
             <form onSubmit={handleDomainCheck} className="flex gap-2">
               <input
                 type="email"
-                placeholder="yourname@pict.edu"
+                placeholder="yourname@gmail.com or student@pict.edu"
                 value={checkEmail}
                 onChange={(e) => setCheckEmail(e.target.value)}
                 className="block w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -381,9 +384,9 @@ export default function LoginPage() {
                     <div className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold">Approved Campus Domain!</p>
+                        <p className="font-semibold">Approved Domain!</p>
                         <p className="text-[11px] text-emerald-700">
-                          {domainCheckResult.college_name || 'Accredited Higher-Ed Institution'}
+                          {domainCheckResult.college_name || 'Verified Google Account / Higher-Ed Institution'}
                         </p>
                       </div>
                     </div>
@@ -407,7 +410,7 @@ export default function LoginPage() {
                     <div>
                       <p className="font-semibold">Domain Not Allowed</p>
                       <p className="text-[11px] text-rose-700">
-                        {domainCheckResult.reason || 'Only official college email addresses (.edu, .ac.in) are permitted.'}
+                        {domainCheckResult.reason || 'Please use a Google account (@gmail.com) or an official college email address.'}
                       </p>
                     </div>
                   </div>

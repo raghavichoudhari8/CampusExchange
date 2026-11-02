@@ -12,7 +12,7 @@ interface AuthGuardProps {
 
 export default function AuthGuard({
   children,
-  fallbackMessage = 'You must be logged in with a verified institutional email (.edu, .ac.in, etc.) to perform this action.',
+  fallbackMessage = 'You must be logged in to perform this action. Sign in with your Google account or college email.',
 }: AuthGuardProps) {
   const { user, isVerified, loading } = useAuth();
 
@@ -26,15 +26,15 @@ export default function AuthGuard({
 
   if (!user || !isVerified) {
     return (
-      <div className="max-w-2xl mx-auto my-12 p-8 bg-white border border-amber-200 rounded-2xl shadow-sm text-center">
-        <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <div className="max-w-2xl mx-auto my-12 p-8 bg-white border border-slate-200 rounded-2xl shadow-sm text-center">
+        <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <ShieldAlert className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">
-          College Email Verification Required
+          Sign In Required
         </h2>
         <p className="text-slate-600 text-sm max-w-md mx-auto mb-6">
-          {fallbackMessage} CampusSwap strictly protects the student community by allowing only verified college students to post items or request contact details.
+          {fallbackMessage} CampusSwap allows students and campus members with a Google account or college email to buy, sell, and connect safely.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -43,7 +43,7 @@ export default function AuthGuard({
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition shadow-sm"
           >
             <UserCheck className="w-4 h-4" />
-            Verify College Account &amp; Log In
+            Sign In with Google / Email
           </Link>
         </div>
       </div>
