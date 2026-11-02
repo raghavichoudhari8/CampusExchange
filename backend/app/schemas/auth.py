@@ -1,5 +1,8 @@
+import re
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field, field_validator
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 class Token(BaseModel):
     access_token: str
@@ -12,8 +15,24 @@ class Token(BaseModel):
 class DemoLoginRequest(BaseModel):
     user_id_or_email: str
 
+    @field_validator("user_id_or_email")
+    @classmethod
+    def validate_user_input(cls, v: str) -> str:
+        clean = v.strip()
+        if not clean:
+            raise ValueError("User ID or email cannot be empty.")
+        return clean
+
 class DomainCheckRequest(BaseModel):
     email: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, v: str) -> str:
+        clean = v.strip().lower()
+        if not EMAIL_REGEX.match(clean):
+            raise ValueError("Invalid email address format.")
+        return clean
 
 class DomainCheckResponse(BaseModel):
     email: str

@@ -1,6 +1,9 @@
+import re
 from typing import List, Optional
 import resend
 from app.config import settings
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 class EmailService:
     def __init__(self):
@@ -10,11 +13,16 @@ class EmailService:
             resend.api_key = self.api_key
 
     def _send_or_log(self, to_email: str, subject: str, html_body: str):
+        clean_email = (to_email or "").strip().lower()
+        if not clean_email or not EMAIL_REGEX.match(clean_email):
+            print(f"[EmailService Warning] Discarded attempt to send email to invalid/empty address: '{to_email}'")
+            return
+
         if self.api_key and not self.api_key.startswith("re_test") and not self.api_key.startswith("re_placeholder"):
             try:
                 resend.Emails.send({
                     "from": self.from_email,
-                    "to": to_email,
+                    "to": clean_email,
                     "subject": subject,
                     "html": html_body,
                 })
