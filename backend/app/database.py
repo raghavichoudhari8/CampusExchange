@@ -34,7 +34,7 @@ class DatabaseStore:
             {"id": "11111111-0000-0000-0000-000000000004", "domain": "iitb.ac.in", "college_name": "IIT Bombay", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000005", "domain": "mit.edu", "college_name": "MIT", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000006", "domain": "stanford.edu", "college_name": "Stanford University", "is_active": True, "created_at": now.isoformat()},
-            {"id": "11111111-0000-0000-0000-000000000007", "domain": "berkeley.edu", "college_name": "UC Berkeley", "is_active": True, "created_at": now.isoformat()},
+            {"id": "11111111-0000-0000-0000-000000000008", "domain": "ms.pict.edu", "college_name": "PICT - Pune Institute of Computer Technology", "is_active": True, "created_at": now.isoformat()},
             {"id": "11111111-0000-0000-0000-000000000009", "domain": "pict.edu", "college_name": "PICT - Pune Institute of Computer Technology", "is_active": True, "created_at": now.isoformat()},
         ]
 

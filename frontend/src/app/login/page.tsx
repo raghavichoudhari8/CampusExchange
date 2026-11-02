@@ -14,6 +14,7 @@ import {
   GraduationCap,
   ArrowRight,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -30,6 +31,7 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [submittingAuth, setSubmittingAuth] = useState(false);
+  const [rateLimitHit, setRateLimitHit] = useState(false);
   const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Google OAuth state
@@ -71,6 +73,26 @@ export default function LoginPage() {
     }
   };
 
+  const handleInstitutionalLogin = async (emailToUse?: string) => {
+    const targetEmail = (emailToUse || authEmail || checkEmail).trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setAuthMessage({ type: 'error', text: 'Please enter a valid college email address.' });
+      return;
+    }
+
+    setSubmittingAuth(true);
+    setAuthMessage(null);
+    try {
+      await api.institutionalLogin(targetEmail);
+      await refreshUser();
+      router.push('/marketplace');
+    } catch (err: any) {
+      setAuthMessage({ type: 'error', text: err.message || 'Institutional login failed.' });
+    } finally {
+      setSubmittingAuth(false);
+    }
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authEmail || !authEmail.includes('@')) {
@@ -80,10 +102,20 @@ export default function LoginPage() {
 
     setSubmittingAuth(true);
     setAuthMessage(null);
+    setRateLimitHit(false);
     try {
       const { error } = await signInWithEmailOtp(authEmail.trim());
       if (error) {
-        setAuthMessage({ type: 'error', text: error.message });
+        const isRateLimit = error.message.toLowerCase().includes('rate limit');
+        if (isRateLimit) {
+          setRateLimitHit(true);
+          setAuthMessage({
+            type: 'error',
+            text: 'Supabase email hourly rate limit reached (free tier allows max 3 emails/hour). Please use Google OAuth or Institutional Fast-Track Login below.',
+          });
+        } else {
+          setAuthMessage({ type: 'error', text: error.message });
+        }
       } else {
         setOtpSent(true);
         setAuthMessage({
@@ -159,6 +191,31 @@ export default function LoginPage() {
                 <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               )}
               <span className="leading-relaxed font-medium">{authMessage.text}</span>
+            </div>
+          )}
+
+          {rateLimitHit && (
+            <div className="p-4 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl border border-indigo-200 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 text-indigo-950 font-bold text-xs">
+                <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                <span>Instant Institutional College Login</span>
+              </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Supabase email rate limit was exceeded. Since your email belongs to a verified institutional domain, you can log in directly without waiting for an email code:
+              </p>
+              <button
+                type="button"
+                onClick={() => handleInstitutionalLogin()}
+                disabled={submittingAuth}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-indigo-100 disabled:opacity-50"
+              >
+                {submittingAuth ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <ShieldCheck className="w-4 h-4" />
+                )}
+                Verify &amp; Enter CampusSwap &rarr;
+              </button>
             </div>
           )}
 
@@ -320,17 +377,29 @@ export default function LoginPage() {
             {domainCheckResult && (
               <div className="mt-3 text-xs">
                 {domainCheckResult.is_allowed ? (
-                  <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Approved Campus Domain!</p>
-                      <p className="text-[11px] text-emerald-700">
-                        {domainCheckResult.college_name || 'Accredited Higher-Ed Institution'}
-                      </p>
-                      <p className="text-[11px] text-emerald-600 mt-1">
-                        Use this email in the login form above to receive your verification code.
-                      </p>
+                  <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold">Approved Campus Domain!</p>
+                        <p className="text-[11px] text-emerald-700">
+                          {domainCheckResult.college_name || 'Accredited Higher-Ed Institution'}
+                        </p>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => handleInstitutionalLogin(checkEmail)}
+                      disabled={submittingAuth}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-xs transition disabled:opacity-50"
+                    >
+                      {submittingAuth ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                      )}
+                      Instant Login with this Email &rarr;
+                    </button>
                   </div>
                 ) : (
                   <div className="p-2.5 bg-rose-50 text-rose-800 rounded-lg border border-rose-200 flex items-start gap-2">

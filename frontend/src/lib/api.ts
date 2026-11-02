@@ -90,6 +90,17 @@ export const api = {
     return res;
   },
 
+  async institutionalLogin(email: string): Promise<AuthToken> {
+    const res = await request<AuthToken>('/api/v1/auth/institutional-login', {
+      method: 'POST',
+      body: JSON.stringify({ user_id_or_email: email }),
+    });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('campusswap_token', res.access_token);
+    }
+    return res;
+  },
+
   async getMe(): Promise<UserProfile> {
     return request<UserProfile>('/api/v1/auth/me');
   },

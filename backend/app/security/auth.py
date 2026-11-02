@@ -32,18 +32,22 @@ def check_domain_whitelist(email: str) -> Tuple[bool, Optional[str], Optional[st
     
     domain = email.split("@")[-1].strip().lower()
     
-    # Check against database allowed_domains
+    # 1. Check exact domain matches first (e.g. ms.pict.edu, pict.edu, iitb.ac.in)
+    for record in db.allowed_domains:
+        if not record.get("is_active", True):
+            continue
+        allowed_pattern = record["domain"].lower()
+        if not allowed_pattern.startswith("."):
+            if domain == allowed_pattern or domain.endswith("." + allowed_pattern):
+                return True, domain, record["college_name"]
+
+    # 2. Check suffix wildcards (.ac.in, .edu.in, .edu)
     for record in db.allowed_domains:
         if not record.get("is_active", True):
             continue
         allowed_pattern = record["domain"].lower()
         if allowed_pattern.startswith("."):
-            # Suffix match, e.g. .edu or .ac.in
             if domain.endswith(allowed_pattern) or domain == allowed_pattern[1:]:
-                return True, domain, record["college_name"]
-        else:
-            # Exact domain match
-            if domain == allowed_pattern or domain.endswith("." + allowed_pattern):
                 return True, domain, record["college_name"]
 
     return False, domain, None

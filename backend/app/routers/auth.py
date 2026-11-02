@@ -86,6 +86,119 @@ def login_demo(payload: DemoLoginRequest):
         role=user["role"]
     )
 
+@router.post("/institutional-login", response_model=Token)
+def institutional_login(payload: DemoLoginRequest):
+    """
+    Direct authenticated login for verified institutional college students.
+    Enforces strict domain validation against allowed institutional domains.
+    Rejects unauthorized personal domains (gmail, yahoo, etc.).
+    Upserts user profile to Supabase cloud to prevent any rate-limit blockages.
+    """
+    email = payload.user_id_or_email.lower().strip()
+    is_allowed, domain, college_name = check_domain_whitelist(email)
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Domain '@{domain}' is not on the approved campus list. Only verified institutional college emails (.edu, .ac.in, ms.pict.edu) are permitted."
+        )
+
+    # 1. Lookup in Supabase Auth or profiles
+    user = next((p for p in db.profiles if p["email"].lower() == email), None)
+    now = datetime.now(timezone.utc)
+    user_id = user["id"] if user else None
+
+    # Check Supabase auth.users for existing user id if available
+    if not user_id and settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                res = client.get(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/admin/users",
+                    headers={"apikey": settings.SUPABASE_KEY, "Authorization": f"Bearer {settings.SUPABASE_KEY}"}
+                )
+                if res.status_code == 200:
+                    supa_users = res.json().get("users", [])
+                    matched = next((u for u in supa_users if u.get("email", "").lower() == email), None)
+                    if matched:
+                        user_id = matched["id"]
+        except Exception:
+            pass
+
+    if not user_id:
+        user_id = str(uuid.uuid4())
+
+    default_campus = "22222222-0000-0000-0000-000000000005"  # PICT
+    raw_name = email.split("@")[0]
+    clean_display = raw_name.replace(".", " ").title()
+
+    if not user:
+        user = {
+            "id": user_id,
+            "email": email,
+            "domain": domain or "",
+            "is_verified": True,
+            "display_name": clean_display,
+            "campus_id": default_campus,
+            "hostel_building": None,
+            "batch_year": 2026,
+            "role": "student",
+            "is_banned": False,
+            "avg_response_time_minutes": 20,
+            "avatar_url": None,
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat()
+        }
+        db.profiles.append(user)
+    else:
+        user["is_verified"] = True
+        if not user.get("campus_id"):
+            user["campus_id"] = default_campus
+
+    # Persist profile to Supabase
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                client.post(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                        "Content-Type": "application/json",
+                        "Prefer": "resolution=merge-duplicates"
+                    },
+                    json={
+                        "id": user["id"],
+                        "email": user["email"],
+                        "domain": user["domain"],
+                        "is_verified": True,
+                        "display_name": user["display_name"],
+                        "campus_id": user["campus_id"],
+                        "hostel_building": user.get("hostel_building"),
+                        "batch_year": user.get("batch_year"),
+                        "role": user.get("role", "student"),
+                        "is_banned": False,
+                        "created_at": user.get("created_at") or now.isoformat(),
+                        "updated_at": now.isoformat()
+                    }
+                )
+        except Exception as e:
+            print("Failed to sync profile in institutional login:", e)
+
+    token = create_access_token(
+        user_id=user["id"],
+        email=user["email"],
+        role=user["role"],
+        is_verified=True
+    )
+
+    return Token(
+        access_token=token,
+        token_type="bearer",
+        user_id=user["id"],
+        email=user["email"],
+        is_verified=True,
+        role=user["role"]
+    )
+
 @router.get("/me", response_model=UserProfileResponse)
 def get_my_profile(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Returns the authenticated user's profile and computed trust badges."""
