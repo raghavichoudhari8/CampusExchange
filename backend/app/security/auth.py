@@ -258,14 +258,15 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[
             pass
 
     if not user:
-        # If user is in Supabase token but not yet in profiles, construct entry
+        # Default campus to PICT if verified student
+        default_campus = "22222222-0000-0000-0000-000000000005" if payload.get("is_verified") else None
         user = {
             "id": user_id,
             "email": payload.get("email", ""),
             "domain": payload.get("domain") or (payload.get("email", "").split("@")[-1] if "@" in payload.get("email", "") else ""),
             "is_verified": payload.get("is_verified", False),
             "display_name": payload.get("display_name") or (payload.get("email", "").split("@")[0] if "@" in payload.get("email", "") else "Student"),
-            "campus_id": None,
+            "campus_id": default_campus,
             "hostel_building": None,
             "batch_year": None,
             "role": payload.get("role", "student"),
@@ -276,6 +277,36 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         db.profiles.append(user)
+
+        # Immediately persist profile to Supabase to prevent foreign key errors on listings
+        if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+            try:
+                with httpx.Client(timeout=4.0) as client:
+                    client.post(
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
+                        headers={
+                            "apikey": settings.SUPABASE_KEY,
+                            "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                            "Content-Type": "application/json",
+                            "Prefer": "resolution=merge-duplicates"
+                        },
+                        json={
+                            "id": user["id"],
+                            "email": user["email"],
+                            "domain": user["domain"],
+                            "is_verified": user["is_verified"],
+                            "display_name": user["display_name"],
+                            "campus_id": user["campus_id"],
+                            "hostel_building": user["hostel_building"],
+                            "batch_year": user["batch_year"],
+                            "role": user["role"],
+                            "is_banned": user["is_banned"],
+                            "created_at": user["created_at"],
+                            "updated_at": user["updated_at"]
+                        }
+                    )
+            except Exception as e:
+                print("Failed to auto-upsert profile to Supabase:", e)
 
     if user.get("is_banned"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been banned.")

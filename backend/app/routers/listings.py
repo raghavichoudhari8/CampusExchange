@@ -126,9 +126,14 @@ async def list_listings(
     """
     if settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
-            with httpx.Client(timeout=3.0) as client:
+            with httpx.Client(timeout=8.0) as client:
+                query_url = f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?select=*"
+                if status:
+                    query_url += f"&status=eq.{status}"
+                query_url += "&order=created_at.desc"
+
                 res = client.get(
-                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?select=*&status=eq.{status}",
+                    query_url,
                     headers={
                         "apikey": settings.SUPABASE_KEY,
                         "Authorization": f"Bearer {settings.SUPABASE_KEY}"
@@ -136,29 +141,45 @@ async def list_listings(
                 )
                 if res.status_code == 200:
                     supa_listings = res.json()
-                    known_ids = {l["id"] for l in db.listings}
-                    for sl in supa_listings:
-                        if sl["id"] not in known_ids:
-                            db.listings.append(sl)
-                            known_ids.add(sl["id"])
+                    # Sync listings: update or append to keep memory in sync with database
+                    supa_ids = {l["id"] for l in supa_listings}
+                    # Keep local listings not in Supabase only if they are newly created in-memory
+                    db.listings = supa_listings + [l for l in db.listings if l["id"] not in supa_ids and l.get("status") == status]
 
+                    # Sync images
                     img_res = client.get(
-                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images?select=*",
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images?select=*&order=sort_order.asc",
                         headers={
                             "apikey": settings.SUPABASE_KEY,
                             "Authorization": f"Bearer {settings.SUPABASE_KEY}"
                         }
                     )
                     if img_res.status_code == 200:
-                        known_img_ids = {img["id"] for img in db.listing_images}
-                        for si in img_res.json():
-                            if si["id"] not in known_img_ids:
-                                db.listing_images.append(si)
-                                known_img_ids.add(si["id"])
-        except Exception:
-            pass
+                        db.listing_images = img_res.json()
 
-    candidates = [l for l in db.listings if l.get("status") == status]
+                    # Sync profiles so seller names and badges are accurately shown
+                    prof_res = client.get(
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles?select=*",
+                        headers={
+                            "apikey": settings.SUPABASE_KEY,
+                            "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                        }
+                    )
+                    if prof_res.status_code == 200:
+                        known_prof_ids = {p["id"] for p in db.profiles}
+                        for sp in prof_res.json():
+                            if sp["id"] not in known_prof_ids:
+                                db.profiles.append(sp)
+                                known_prof_ids.add(sp["id"])
+                            else:
+                                for ep in db.profiles:
+                                    if ep["id"] == sp["id"]:
+                                        ep.update(sp)
+                                        break
+        except Exception as e:
+            print("Failed to sync listings from Supabase:", e)
+
+    candidates = [l for l in db.listings if (l.get("status") == status if status else True)]
 
     # Category filter
     if category_id:
@@ -201,6 +222,46 @@ async def list_listings(
 def get_listing(id: str, caller: Optional[Dict[str, Any]] = Depends(get_current_user_optional)):
     """Fetches details for a specific listing and increments view count."""
     listing = next((l for l in db.listings if l["id"] == id), None)
+    if not listing and settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=6.0) as client:
+                res = client.get(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?id=eq.{id}&select=*",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                    }
+                )
+                if res.status_code == 200 and res.json():
+                    listing = res.json()[0]
+                    db.listings.append(listing)
+                    # Fetch images for this listing
+                    img_res = client.get(
+                        f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images?listing_id=eq.{id}&select=*&order=sort_order.asc",
+                        headers={
+                            "apikey": settings.SUPABASE_KEY,
+                            "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                        }
+                    )
+                    if img_res.status_code == 200:
+                        for img in img_res.json():
+                            if not any(i["id"] == img["id"] for i in db.listing_images):
+                                db.listing_images.append(img)
+                    # Fetch seller profile if missing
+                    seller_id = listing.get("seller_id")
+                    if seller_id and not any(p["id"] == seller_id for p in db.profiles):
+                        prof_res = client.get(
+                            f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles?id=eq.{seller_id}&select=*",
+                            headers={
+                                "apikey": settings.SUPABASE_KEY,
+                                "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                            }
+                        )
+                        if prof_res.status_code == 200 and prof_res.json():
+                            db.profiles.append(prof_res.json()[0])
+        except Exception as e:
+            print("Failed to fetch listing from Supabase:", e)
+
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
 
@@ -223,15 +284,19 @@ async def create_listing(
     now = datetime.now(timezone.utc)
     listing_id = str(uuid.uuid4())
 
-    # Basic spam / prohibited heuristic (enhanced in Phase 7 with ML model)
+    # Basic spam / prohibited heuristic
     from app.services.ml_service import ml_service
     is_prohibited, spam_score, reason = ml_service.check_content(payload.title, payload.description)
     listing_status = "flagged" if is_prohibited or spam_score >= 0.7 else "active"
 
+    # Verify campus exists or fall back to PICT
+    campus = next((c for c in db.campuses if c["id"] == payload.campus_id), None)
+    campus_id = campus["id"] if campus else "22222222-0000-0000-0000-000000000005"
+
     new_listing = {
         "id": listing_id,
         "seller_id": current_user["id"],
-        "campus_id": payload.campus_id,
+        "campus_id": campus_id,
         "category_id": payload.category_id,
         "title": payload.title.strip(),
         "description": payload.description.strip(),
@@ -248,7 +313,7 @@ async def create_listing(
     }
     db.listings.insert(0, new_listing)
 
-    # Save images
+    # Save images in memory
     for idx, url in enumerate(payload.images):
         db.listing_images.append({
             "id": str(uuid.uuid4()),
@@ -274,18 +339,46 @@ async def create_listing(
     # Persist to Supabase when configured in cloud environment
     if settings.SUPABASE_URL and settings.SUPABASE_KEY:
         try:
-            with httpx.Client(timeout=4.0) as client:
+            with httpx.Client(timeout=8.0) as client:
                 headers = {
                     "apikey": settings.SUPABASE_KEY,
                     "Authorization": f"Bearer {settings.SUPABASE_KEY}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal"
+                    "Content-Type": "application/json"
                 }
+                # 1. Ensure user profile exists in Supabase to satisfy listings_seller_id_fkey
                 client.post(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/profiles",
+                    headers={**headers, "Prefer": "resolution=merge-duplicates"},
+                    json={
+                        "id": current_user["id"],
+                        "email": current_user.get("email", ""),
+                        "domain": current_user.get("domain", ""),
+                        "is_verified": current_user.get("is_verified", True),
+                        "display_name": current_user.get("display_name") or "Student",
+                        "campus_id": campus_id,
+                        "hostel_building": current_user.get("hostel_building"),
+                        "batch_year": current_user.get("batch_year"),
+                        "role": current_user.get("role", "student"),
+                        "is_banned": False,
+                        "created_at": current_user.get("created_at") or now.isoformat(),
+                        "updated_at": now.isoformat()
+                    }
+                )
+
+                # 2. Persist the listing record
+                res = client.post(
                     f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings",
-                    headers=headers,
+                    headers={**headers, "Prefer": "return=minimal"},
                     json=new_listing
                 )
+                if res.status_code >= 400:
+                    print("Supabase listing insert failed:", res.status_code, res.text)
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to persist listing to Supabase: {res.text}"
+                    )
+
+                # 3. Persist images
                 if payload.images:
                     img_rows = [{
                         "id": str(uuid.uuid4()),
@@ -295,12 +388,14 @@ async def create_listing(
                     } for idx, url in enumerate(payload.images)]
                     client.post(
                         f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images",
-                        headers=headers,
+                        headers={**headers, "Prefer": "return=minimal"},
                         json=img_rows
                     )
+
+                # 4. Persist contact details
                 client.post(
                     f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/contact_details",
-                    headers=headers,
+                    headers={**headers, "Prefer": "return=minimal"},
                     json={
                         "id": str(uuid.uuid4()),
                         "listing_id": listing_id,
@@ -310,6 +405,8 @@ async def create_listing(
                         "preferred_note": payload.preferred_note.strip() if payload.preferred_note else None
                     }
                 )
+        except HTTPException:
+            raise
         except Exception as e:
             print("Failed to sync listing to Supabase:", e)
 
@@ -348,6 +445,21 @@ def update_listing_status(
     listing["status"] = payload.status
     listing["updated_at"] = datetime.now(timezone.utc).isoformat()
 
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                client.patch(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?id=eq.{id}",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={"status": payload.status, "updated_at": listing["updated_at"]}
+                )
+        except Exception:
+            pass
+
     return _format_listing_response(listing, current_user)
 
 @router.post("/{id}/renew", response_model=ListingResponse)
@@ -369,6 +481,21 @@ def renew_listing(
         listing["status"] = "active"
     listing["updated_at"] = now.isoformat()
 
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                client.patch(
+                    f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?id=eq.{id}",
+                    headers={
+                        "apikey": settings.SUPABASE_KEY,
+                        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={"expires_at": listing["expires_at"], "status": listing["status"], "updated_at": listing["updated_at"]}
+                )
+        except Exception:
+            pass
+
     return _format_listing_response(listing, current_user)
 
 @router.delete("/{id}")
@@ -388,6 +515,20 @@ def delete_listing(
     db.listing_images = [img for img in db.listing_images if img["listing_id"] != id]
     db.contact_details = [c for c in db.contact_details if c["listing_id"] != id]
     db.contact_requests = [r for r in db.contact_requests if r["listing_id"] != id]
+
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                headers = {
+                    "apikey": settings.SUPABASE_KEY,
+                    "Authorization": f"Bearer {settings.SUPABASE_KEY}"
+                }
+                client.delete(f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listing_images?listing_id=eq.{id}", headers=headers)
+                client.delete(f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/contact_details?listing_id=eq.{id}", headers=headers)
+                client.delete(f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/contact_requests?listing_id=eq.{id}", headers=headers)
+                client.delete(f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/listings?id=eq.{id}", headers=headers)
+        except Exception as e:
+            print("Failed to delete listing from Supabase:", e)
 
     return {"message": "Listing deleted successfully"}
 

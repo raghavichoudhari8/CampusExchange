@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import auth, listings, ml, contacts, wanted, admin, cron
+from app.routers import auth, listings, ml, contacts, wanted, admin, cron, chat, websockets
 
 app = FastAPI(
     title="CampusSwap API",
@@ -47,6 +47,8 @@ app.include_router(contacts.router)
 app.include_router(wanted.router)
 app.include_router(admin.router)
 app.include_router(cron.router)
+app.include_router(chat.router)
+app.include_router(websockets.router)
 
 @app.get("/health")
 @app.get("/health/")

@@ -20,6 +20,7 @@ import {
   Compass,
   Search,
   Check,
+  MessageSquare,
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -33,8 +34,13 @@ export default function Navbar() {
     { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
     { href: '/wanted', label: 'Wishlist Board', icon: Compass },
     { href: '/listing/new', label: 'Post Item', icon: PlusCircle, highlight: true },
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   ];
+
+  if (user) {
+    navLinks.push({ href: '/messages', label: 'Messages', icon: MessageSquare });
+  }
+
+  navLinks.push({ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard });
 
   if (user?.role === 'admin') {
     navLinks.push({ href: '/admin', label: 'Admin Portal', icon: ShieldAlert, highlight: false });
@@ -151,6 +157,14 @@ export default function Navbar() {
                     </div>
 
                     <div className="pt-1.5 px-2">
+                      <Link
+                        href="/messages"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 font-semibold rounded-xl"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+                        In-App Messages
+                      </Link>
                       <Link
                         href="/onboarding"
                         onClick={() => setUserDropdownOpen(false)}

@@ -139,3 +139,41 @@ export interface AuditLog {
   ip_address?: string;
   created_at: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  sender_name: string;
+  recipient_id: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+export interface ChatParticipant {
+  id: string;
+  display_name: string;
+  is_verified: boolean;
+  campus_name?: string | null;
+}
+
+export interface ChatListing {
+  id: string;
+  title: string;
+  price: number;
+  is_free: boolean;
+  image?: string | null;
+  status: string;
+  location_note?: string | null;
+}
+
+export interface ChatConversation {
+  id: string;
+  listing: ChatListing;
+  other_user: ChatParticipant;
+  last_message?: ChatMessage | null;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
+}

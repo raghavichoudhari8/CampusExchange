@@ -36,6 +36,7 @@ import Link from 'next/link';
 
 export default function ListingDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { user, isVerified } = useAuth();
   const { showSuccess, showError, showInfo } = useToast();
   const listingId = params?.id as string;
@@ -45,7 +46,8 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // Request contact modal / form state
+  // Chat & Contact state
+  const [startingChat, setStartingChat] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
   const [sendingRequest, setSendingRequest] = useState(false);
   const [requestSentSuccess, setRequestSentSuccess] = useState(false);
@@ -80,6 +82,27 @@ export default function ListingDetailPage() {
       fetchListing();
     }
   }, [listingId, user]);
+
+  const handleStartChat = async (initialMsg?: string) => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    if (!isVerified) {
+      showError('Institutional email verification is required to chat with peers.');
+      return;
+    }
+    setStartingChat(true);
+    try {
+      const conv = await api.startConversation(listingId, initialMsg);
+      showSuccess('Chat initiated! Connecting...');
+      router.push(`/messages?conversationId=${conv.id}`);
+    } catch (err: any) {
+      showError(err.message || 'Could not initiate chat');
+    } finally {
+      setStartingChat(false);
+    }
+  };
 
   const handleRequestContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -389,12 +412,64 @@ export default function ListingDetailPage() {
                       </p>
                     </div>
                   )}
-                  <Link
-                    href="/dashboard"
-                    className="inline-block mt-2 px-3.5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition shadow-sm"
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Link
+                      href="/dashboard"
+                      className="inline-block px-3.5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition shadow-sm"
+                    >
+                      Manage Consent Queue &rarr;
+                    </Link>
+                    <Link
+                      href="/messages"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-indigo-200 text-indigo-700 font-bold text-xs hover:bg-indigo-50 transition shadow-2xs"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      View In-App Chats
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* In-App Live Chat for Buyers */}
+              {!isSeller && isVerified && (
+                <div className="p-4 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl border border-indigo-200/90 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-2xs">
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xs text-slate-900 leading-none">Instant Chat</h3>
+                        <span className="text-[10px] text-slate-500 font-medium">Safe in-app messaging</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                      Live
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Message {listing.seller_name || 'the seller'} directly to ask questions, verify availability, or schedule a campus meetup.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleStartChat()}
+                    disabled={startingChat}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-xs shadow-md shadow-indigo-100 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                   >
-                    Manage Consent Queue in Dashboard &rarr;
-                  </Link>
+                    <MessageSquare className="w-4 h-4" />
+                    {startingChat ? 'Connecting to Chat...' : `Chat with ${listing.seller_name || 'Seller'} Now`}
+                  </button>
+                </div>
+              )}
+
+              {!isSeller && isVerified && !isApproved && (
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400">
+                    <span className="bg-white px-2">or request direct contact</span>
+                  </div>
                 </div>
               )}
 

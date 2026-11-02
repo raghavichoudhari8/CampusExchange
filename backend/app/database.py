@@ -19,6 +19,8 @@ class DatabaseStore:
         self.reports: List[Dict[str, Any]] = []
         self.audit_logs: List[Dict[str, Any]] = []
         self.notifications: List[Dict[str, Any]] = []
+        self.conversations: List[Dict[str, Any]] = []
+        self.chat_messages: List[Dict[str, Any]] = []
         self._seed_initial_data()
 
     def _seed_initial_data(self):
@@ -66,6 +68,8 @@ class DatabaseStore:
         self.contact_details = []
         self.contact_requests = []
         self.wanted_posts = []
+        self.conversations = []
+        self.chat_messages = []
 
 # Global singleton database instance
 db = DatabaseStore()

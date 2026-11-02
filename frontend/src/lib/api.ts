@@ -7,6 +7,8 @@ import {
   ContactRequest,
   WantedPost,
   DomainCheckResult,
+  ChatConversation,
+  ChatMessage,
 } from '@/types';
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -250,4 +252,32 @@ export const api = {
       method: 'POST',
     });
   },
+
+  // Chat
+  async startConversation(listingId: string, initialMessage?: string): Promise<ChatConversation> {
+    return request<ChatConversation>('/api/v1/chat/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ listing_id: listingId, initial_message: initialMessage }),
+    });
+  },
+
+  async getConversations(): Promise<ChatConversation[]> {
+    return request<ChatConversation[]>('/api/v1/chat/conversations');
+  },
+
+  async getConversation(id: string): Promise<ChatConversation> {
+    return request<ChatConversation>(`/api/v1/chat/conversations/${id}`);
+  },
+
+  async getMessages(conversationId: string): Promise<ChatMessage[]> {
+    return request<ChatMessage[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
+  },
+
+  async sendMessage(conversationId: string, content: string): Promise<ChatMessage> {
+    return request<ChatMessage>(`/api/v1/chat/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  },
 };
+
